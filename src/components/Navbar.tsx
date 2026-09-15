@@ -362,10 +362,10 @@ export default function Navbar() {
                 {currentUser?.role === 'ADMIN' && (
                   <Link
                     href="/admin"
-                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-950/40 border border-red-500/40 text-red-400 text-xs font-bold hover:bg-red-900/50 transition-all"
+                    className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-red-950/40 border border-red-500/40 text-red-400 text-xs font-bold hover:bg-red-900/50 transition-all flex-shrink-0"
                   >
-                    <Shield className="w-4 h-4 text-red-400" />
-                    <span>Admin</span>
+                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                    <span className="text-[11px] sm:text-xs">Admin</span>
                   </Link>
                 )}
 

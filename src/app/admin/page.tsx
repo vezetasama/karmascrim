@@ -96,10 +96,7 @@ export default async function AdminOverviewPage() {
   const { metrics, recentRegistrations } = await getAdminMetrics();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0E14] text-white">
-      <Navbar />
-
-      <main className="flex-1 py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <main className="py-4 sm:py-8 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
         
         {/* Admin Header */}
         <div className="p-6 rounded-3xl bg-gradient-to-r from-red-950/40 via-[#121722] to-orange-950/20 border border-red-500/40 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -336,8 +333,5 @@ export default async function AdminOverviewPage() {
         </div>
 
       </main>
-
-      <Footer />
-    </div>
   );
 }

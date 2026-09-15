@@ -129,10 +129,7 @@ export default function AdminWithdrawalsPage() {
     .reduce((sum, r) => sum + r.amount, 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0E14] text-white">
-      <Navbar />
-
-      <main className="flex-1 py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6">
+    <main className="py-4 sm:py-8 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full space-y-6">
         
         {/* Navigation & Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -355,82 +352,78 @@ export default function AdminWithdrawalsPage() {
           )}
         </div>
 
-      </main>
-
-      {/* REJECTION REASON MODAL */}
-      {rejectModalOpen && selectedReq && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-[#121722] border border-[#262F45] w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
-            
-            <div className="flex items-center justify-between border-b border-[#262F45] pb-3">
-              <h3 className="text-base font-bold text-white uppercase flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-red-500" />
-                Reject Withdrawal Request
-              </h3>
-              <button
-                onClick={() => {
-                  setRejectModalOpen(false);
-                  setSelectedReq(null);
-                }}
-                className="text-gray-400 hover:text-white text-xs"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="text-xs space-y-1 bg-[#0B0E14] p-3 rounded-2xl border border-[#262F45]">
-              <div>Request ID: <span className="font-mono font-bold text-[#FF9F1C]">{selectedReq.requestId}</span></div>
-              <div>User: <span className="font-bold text-white">{selectedReq.user?.name}</span></div>
-              <div>Amount: <span className="font-bold text-white">NPR {selectedReq.amount.toLocaleString()}</span></div>
-              <div>Method: <span className="font-bold text-gray-300">{selectedReq.method} ({selectedReq.accountNumber})</span></div>
-            </div>
-
-            <p className="text-xs text-gray-300">
-              Rejecting this request will immediately refund <strong>NPR {selectedReq.amount.toLocaleString()}</strong> back to the user's withdrawable earnings balance.
-            </p>
-
-            <form onSubmit={handleRejectSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                  Rejection Reason (Required)
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="e.g. Invalid eSewa ID / Name mismatch on bank account."
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white placeholder-gray-600 focus:outline-none focus:border-red-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
+        {/* REJECTION REASON MODAL */}
+        {rejectModalOpen && selectedReq && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="bg-[#121722] border border-[#262F45] w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+              
+              <div className="flex items-center justify-between border-b border-[#262F45] pb-3">
+                <h3 className="text-base font-bold text-white uppercase flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-red-500" />
+                  Reject Withdrawal Request
+                </h3>
                 <button
-                  type="button"
                   onClick={() => {
                     setRejectModalOpen(false);
                     setSelectedReq(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-gray-400 hover:text-white"
+                  className="text-gray-400 hover:text-white text-xs"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actioningId === selectedReq.id || !rejectionReason.trim()}
-                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {actioningId === selectedReq.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Confirm Rejection</span>
+                  ✕
                 </button>
               </div>
-            </form>
 
+              <div className="text-xs space-y-1 bg-[#0B0E14] p-3 rounded-2xl border border-[#262F45]">
+                <div>Request ID: <span className="font-mono font-bold text-[#FF9F1C]">{selectedReq.requestId}</span></div>
+                <div>User: <span className="font-bold text-white">{selectedReq.user?.name}</span></div>
+                <div>Amount: <span className="font-bold text-white">NPR {selectedReq.amount.toLocaleString()}</span></div>
+                <div>Method: <span className="font-bold text-gray-300">{selectedReq.method} ({selectedReq.accountNumber})</span></div>
+              </div>
+
+              <p className="text-xs text-gray-300">
+                Rejecting this request will immediately refund <strong>NPR {selectedReq.amount.toLocaleString()}</strong> back to the user's withdrawable earnings balance.
+              </p>
+
+              <form onSubmit={handleRejectSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
+                    Rejection Reason (Required)
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="e.g. Invalid eSewa ID / Name mismatch on bank account."
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white placeholder-gray-600 focus:outline-none focus:border-red-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRejectModalOpen(false);
+                      setSelectedReq(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-gray-400 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actioningId === selectedReq.id || !rejectionReason.trim()}
+                    className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {actioningId === selectedReq.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Confirm Rejection</span>
+                  </button>
+                </div>
+              </form>
+
+            </div>
           </div>
-        </div>
-      )}
-
-      <Footer />
-    </div>
+        )}
+      </main>
   );
 }

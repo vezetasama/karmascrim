@@ -57,10 +57,7 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0E14] text-white">
-      <Navbar />
-
-      <main className="flex-1 py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <main className="py-4 sm:py-8 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
@@ -183,8 +180,5 @@ export default function AdminUsersPage() {
         </div>
 
       </main>
-
-      <Footer />
-    </div>
   );
 }

@@ -257,10 +257,7 @@ export default function AdminBannersPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0E14] text-white">
-      <Navbar />
-
-      <main className="flex-1 py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <main className="py-4 sm:py-8 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
         
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -723,8 +720,5 @@ export default function AdminBannersPage() {
         )}
 
       </main>
-
-      <Footer />
-    </div>
   );
 }

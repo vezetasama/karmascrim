@@ -205,10 +205,7 @@ export default function AdminNotificationsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-white flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+    <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-12">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#262F45]">
           <div className="flex items-center space-x-3">
@@ -585,8 +582,5 @@ export default function AdminNotificationsPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
-    </div>
   );
 }
