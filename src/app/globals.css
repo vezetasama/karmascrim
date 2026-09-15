@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0B0E14;
+  --color-surface: #121722;
+  --color-surface-hover: #1A2234;
+  --color-surface-border: #262F45;
+  --color-brand-red: #FF2E4C;
+  --color-brand-red-dark: #D61F3B;
+  --color-brand-gold: #FF9F1C;
+  --color-brand-orange: #FF5722;
+  --font-sans: 'Inter', sans-serif;
+}
+
+/* Custom Esports Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0E14;
+}
+::-webkit-scrollbar-thumb {
+  background: #262F45;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF2E4C;
+}
+
+/* Glassmorphism & Esports Utilities */
+.glass-card {
+  background: rgba(18, 23, 34, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 46, 76, 0.3);
+}
+
+.badge-full-map {
+  background: linear-gradient(135deg, rgba(255, 46, 76, 0.2) 0%, rgba(255, 46, 76, 0.05) 100%);
+  border: 1px solid rgba(255, 46, 76, 0.4);
+  color: #FF2E4C;
+}
+
+.badge-clash-squad {
+  background: linear-gradient(135deg, rgba(255, 159, 28, 0.2) 0%, rgba(255, 159, 28, 0.05) 100%);
+  border: 1px solid rgba(255, 159, 28, 0.4);
+  color: #FF9F1C;
+}
+
+.glow-btn-red {
+  background: linear-gradient(135deg, #FF2E4C 0%, #D61F3B 100%);
+  box-shadow: 0 0 15px rgba(255, 46, 76, 0.35);
+  transition: all 0.2s ease-in-out;
+}
+
+.glow-btn-red:hover {
+  box-shadow: 0 0 25px rgba(255, 46, 76, 0.55);
+  transform: translateY(-1px);
+}

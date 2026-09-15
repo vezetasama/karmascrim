@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(uuid())
+  name         String
+  username     String         @unique
+  email        String         @unique
+  passwordHash String
+  phone        String?
+  freeFireUid  String?
+  freeFireName String?
+  role         String         @default("USER") // USER, ADMIN
+  status       String         @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  teamsCaptained Team[]       @relation("CaptainRelation")
+  teamMemberships TeamMember[]
+  registrations  Registration[]
+  notifications  Notification[]
+  passwordResetTokens PasswordResetToken[]
+  wallet         Wallet?
+  depositRequests DepositRequest[]
+  withdrawalRequests WithdrawalRequest[]
+  walletTransactions WalletTransaction[]
+}
+
+model Tournament {
+  id                   String         @id @default(uuid())
+  name                 String
+  slug                 String         @unique
+  category             String         // FULL_MAP, CLASH_SQUAD
+  format               String         // Squad, 1v1, 2v2, 4v4
+  description          String?
+  rules                String?
+  date                 String         // YYYY-MM-DD
+  startTime            String         // HH:MM AM/PM
+  registrationDeadline String         // ISO string or formatted date/time
+  entryFee             Int            // NPR
+  prizePool            Int            // NPR
+  totalSlots           Int            @default(48)
+  registeredSlots      Int            @default(0)
+  status               String         @default("REGISTRATION_OPEN") // DRAFT, REGISTRATION_OPEN, REGISTRATION_CLOSED, LIVE, COMPLETED, CANCELLED
+  maps                 String?        // Stored as JSON string e.g. ["Bermuda", "Purgatory", "Kalahari"]
+  bannerUrl            String?
+  roomId               String?
+  roomPassword         String?
+  roomReleased         Boolean        @default(false)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  registrations        Registration[]
+  matches              Match[]
+}
+
+model Team {
+  id        String       @id @default(uuid())
+  name      String
+  category  String       // FULL_MAP, CLASH_SQUAD
+  captainId String
+  captain   User         @relation("CaptainRelation", fields: [captainId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  members       TeamMember[]
+  registrations Registration[]
+  matchResults  MatchResult[]
+}
+
+model TeamMember {
+  id           String   @id @default(uuid())
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  freeFireUid  String
+  freeFireName String
+  role         String   @default("MEMBER") // CAPTAIN, MEMBER, SUBSTITUTE
+  createdAt    DateTime @default(now())
+}
+
+model Registration {
+  id             String       @id @default(uuid())
+  registrationId String       @unique // e.g. KS-REG-83921
+  tournamentId   String
+  tournament     Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teamId         String?
+  team           Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         String       @default("PENDING_PAYMENT") // PENDING_PAYMENT, PAYMENT_SUBMITTED, CONFIRMED, REJECTED, CANCELLED, REFUNDED, COMPLETED
+  paymentStatus  String       @default("UNPAID") // UNPAID, SUBMITTED, VERIFIED, REJECTED
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  payment        Payment?
+}
+
+model PaymentMethod {
+  id              String    @id @default(uuid())
+  name            String    // Fonepay, eSewa, Khalti
+  type            String    // FONEPAY, ESEWA, KHALTI
+  accountName     String
+  accountNumber   String
+  merchantDetails String?
+  instructions    String?
+  qrImageUrl      String?
+  enabled         Boolean   @default(true)
+  minAmount       Int       @default(10)
+  maxAmount       Int       @default(25000)
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  payments        Payment[]
+  depositRequests DepositRequest[]
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  registrationId  String        @unique
+  registration    Registration  @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  paymentMethodId String
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  amount          Int
+  transactionId   String
+  screenshotUrl   String?
+  note            String?
+  status          String        @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason String?
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Match {
+  id            String        @id @default(uuid())
+  tournamentId  String
+  tournament    Tournament    @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  matchNumber   Int
+  scheduledTime String?
+  roomId        String?
+  roomPassword  String?
+  status        String        @default("SCHEDULED") // SCHEDULED, LIVE, COMPLETED
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  results       MatchResult[]
+}
+
+model MatchResult {
+  id              String   @id @default(uuid())
+  matchId         String
+  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamId          String
+  team            Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  placement       Int      // 1st, 2nd, etc.
+  kills           Int      @default(0)
+  placementPoints Int      @default(0)
+  totalPoints     Int      @default(0)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("ANNOUNCEMENT") // DEPOSIT, WITHDRAWAL, TOURNAMENT, TOPUP, ACCOUNT, ANNOUNCEMENT
+  relatedId String?
+  actionUrl String?
+  actionText String?
+  status    String?  // PENDING, SUCCESS, FAILED
+  sentBy    String?
+  read      Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
+}
+
+model AdminNotificationLog {
+  id             String   @id @default(uuid())
+  title          String
+  message        String
+  type           String   @default("ANNOUNCEMENT")
+  recipientType  String   // ALL, SPECIFIC
+  recipientCount Int      @default(0)
+  targetUserIds  String?
+  actionUrl      String?
+  actionText     String?
+  sentBy         String
+  createdAt      DateTime @default(now())
+}
+
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique // SHA-256 hashed token
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Banner {
+  id          String   @id @default(uuid())
+  title       String?
+  subtitle    String?
+  buttonText  String?
+  buttonLink  String?
+  imageUrl    String
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Wallet {
+  id              String              @id @default(uuid())
+  userId          String              @unique
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance         Int                 @default(0) // Total balance = depositBalance + winningsBalance
+  depositBalance  Int                 @default(0) // Deposited money for entering scrims
+  winningsBalance Int                 @default(0) // Tournament prize winnings (withdrawable)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  transactions    WalletTransaction[]
+}
+
+model DepositRequest {
+  id              String        @id @default(uuid())
+  requestId       String        @unique // e.g. KS-DEP-83921
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentMethodId String
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  amount          Int
+  transactionId   String
+  screenshotUrl   String?
+  note            String?
+  status          String        @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason String?
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model WithdrawalRequest {
+  id              String    @id @default(uuid())
+  requestId       String    @unique // e.g. KS-WTH-83921
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount          Int
+  method          String    // ESEWA, KHALTI, BANK_TRANSFER
+  accountName     String
+  accountNumber   String    // eSewa ID, Khalti ID, or Bank Account Number
+  bankName        String?   // Bank Name if BANK_TRANSFER
+  fee             Int       @default(0)
+  netAmount       Int
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason String?
+  processedBy     String?
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model WalletTransaction {
+  id            String   @id @default(uuid())
+  walletId      String
+  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String   // DEPOSIT, WITHDRAWAL, ENTRY_FEE, REFUND, PRIZE, MANUAL_ADJUSTMENT
+  amount        Int      // Positive (+) for credit, negative (-) for debit
+  balanceBefore Int
+  balanceAfter  Int
+  description   String
+  referenceId   String?  // depositRequestId, withdrawalRequestId, registrationId, tournamentId
+  createdAt     DateTime @default(now())
+}
+
+
