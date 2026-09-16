@@ -36,43 +36,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
 
-    const result = await db.$transaction(async (tx) => {
-      let wallet = await tx.wallet.findUnique({ where: { userId } });
-      if (!wallet) {
-        wallet = await tx.wallet.create({
-          data: { userId, balance: 0 },
+    const result = await db.$transaction(
+      async (tx) => {
+        let wallet = await tx.wallet.findUnique({ where: { userId } });
+        if (!wallet) {
+          wallet = await tx.wallet.create({
+            data: { userId, balance: 0 },
+          });
+        }
+
+        const balanceBefore = wallet.balance;
+        const balanceAfter = balanceBefore + adjustAmount;
+
+        if (balanceAfter < 0) {
+          throw new Error(`Adjustment would result in negative wallet balance (Current: NPR ${balanceBefore}).`);
+        }
+
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: { balance: balanceAfter },
         });
+
+        const txRecord = await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            userId,
+            type: 'MANUAL_ADJUSTMENT',
+            amount: adjustAmount,
+            balanceBefore,
+            balanceAfter,
+            description: `Admin Manual Adjustment: ${reason.trim()} (By: ${admin.name || admin.username})`,
+            referenceId: `ADMIN-${admin.id}`,
+          },
+        });
+
+        return { wallet, balanceAfter, txRecord };
+      },
+      {
+        timeout: 20000,
+        maxWait: 10000,
       }
+    );
 
-      const balanceBefore = wallet.balance;
-      const balanceAfter = balanceBefore + adjustAmount;
-
-      if (balanceAfter < 0) {
-        throw new Error(`Adjustment would result in negative wallet balance (Current: NPR ${balanceBefore}).`);
-      }
-
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balance: balanceAfter },
-      });
-
-      const txRecord = await tx.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          userId,
-          type: 'MANUAL_ADJUSTMENT',
-          amount: adjustAmount,
-          balanceBefore,
-          balanceAfter,
-          description: `Admin Manual Adjustment: ${reason.trim()} (By: ${admin.name || admin.username})`,
-          referenceId: `ADMIN-${admin.id}`,
-        },
-      });
-
-      await notifyWalletAdjusted(userId, adjustAmount, balanceAfter, reason.trim());
-
-      return { wallet, balanceAfter, txRecord };
-    });
+    try {
+      await notifyWalletAdjusted(userId, adjustAmount, result.balanceAfter, reason.trim());
+    } catch (nErr) {
+      console.error('Failed to dispatch wallet adjustment notification:', nErr);
+    }
 
     return NextResponse.json({
       success: true,

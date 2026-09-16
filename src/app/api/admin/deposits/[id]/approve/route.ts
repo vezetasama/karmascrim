@@ -26,81 +26,91 @@ export async function POST(
     const { id } = await params;
 
     // Execute atomic transaction for approval
-    const result = await db.$transaction(async (tx) => {
-      const depositRequest = await tx.depositRequest.findUnique({
-        where: { id },
-        include: { user: true, paymentMethod: true },
-      });
+    const result = await db.$transaction(
+      async (tx) => {
+        const depositRequest = await tx.depositRequest.findUnique({
+          where: { id },
+          include: { user: true, paymentMethod: true },
+        });
 
-      if (!depositRequest) {
-        throw new Error('Deposit request not found.');
-      }
+        if (!depositRequest) {
+          throw new Error('Deposit request not found.');
+        }
 
-      if (depositRequest.status !== 'PENDING') {
-        throw new Error(`Deposit request is already ${depositRequest.status}.`);
-      }
+        if (depositRequest.status !== 'PENDING') {
+          throw new Error(`Deposit request is already ${depositRequest.status}.`);
+        }
 
-      // 1. Mark deposit as APPROVED
-      const updatedDeposit = await tx.depositRequest.update({
-        where: { id },
-        data: {
-          status: 'APPROVED',
-          verifiedBy: admin.id,
-          verifiedAt: new Date(),
-        },
-      });
-
-      // 2. Fetch or create user's wallet
-      let wallet = await tx.wallet.findUnique({
-        where: { userId: depositRequest.userId },
-      });
-
-      if (!wallet) {
-        wallet = await tx.wallet.create({
+        // 1. Mark deposit as APPROVED
+        const updatedDeposit = await tx.depositRequest.update({
+          where: { id },
           data: {
-            userId: depositRequest.userId,
-            balance: 0,
+            status: 'APPROVED',
+            verifiedBy: admin.id,
+            verifiedAt: new Date(),
           },
         });
+
+        // 2. Fetch or create user's wallet
+        let wallet = await tx.wallet.findUnique({
+          where: { userId: depositRequest.userId },
+        });
+
+        if (!wallet) {
+          wallet = await tx.wallet.create({
+            data: {
+              userId: depositRequest.userId,
+              balance: 0,
+            },
+          });
+        }
+
+        const newDepositBalance = (wallet.depositBalance ?? 0) + depositRequest.amount;
+        const balanceBefore = wallet.balance;
+        const balanceAfter = newDepositBalance + (wallet.winningsBalance ?? 0);
+
+        // 3. Update wallet balance
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            depositBalance: newDepositBalance,
+            balance: balanceAfter,
+          },
+        });
+
+        // 4. Create WalletTransaction record
+        await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            userId: depositRequest.userId,
+            type: 'DEPOSIT',
+            amount: depositRequest.amount,
+            balanceBefore,
+            balanceAfter,
+            description: `Fonepay Deposit Approved (${depositRequest.requestId})`,
+            referenceId: depositRequest.requestId,
+          },
+        });
+
+        return { updatedDeposit, depositRequest, balanceAfter };
+      },
+      {
+        timeout: 20000,
+        maxWait: 10000,
       }
+    );
 
-      const newDepositBalance = (wallet.depositBalance ?? 0) + depositRequest.amount;
-      const balanceBefore = wallet.balance;
-      const balanceAfter = newDepositBalance + (wallet.winningsBalance ?? 0);
-
-      // 3. Update wallet balance
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: {
-          depositBalance: newDepositBalance,
-          balance: balanceAfter,
-        },
-      });
-
-      // 4. Create WalletTransaction record
-      await tx.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          userId: depositRequest.userId,
-          type: 'DEPOSIT',
-          amount: depositRequest.amount,
-          balanceBefore,
-          balanceAfter,
-          description: `Fonepay Deposit Approved (${depositRequest.requestId})`,
-          referenceId: depositRequest.requestId,
-        },
-      });
-
-      // 5. Send notification to user
+    // 5. Send notification to user outside transaction
+    try {
       await notifyDepositApproved(
-        depositRequest.userId,
-        depositRequest.amount,
-        depositRequest.requestId,
-        balanceAfter
+        result.depositRequest.userId,
+        result.depositRequest.amount,
+        result.depositRequest.requestId,
+        result.balanceAfter
       );
-
-      return { updatedDeposit, balanceAfter };
-    });
+    } catch (nErr) {
+      console.error('Failed to dispatch deposit approval notification:', nErr);
+    }
 
     return NextResponse.json({
       success: true,
