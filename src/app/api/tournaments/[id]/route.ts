@@ -86,6 +86,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     if (body.format !== undefined) updateData.format = body.format;
     if (body.description !== undefined) updateData.description = body.description;
     if (body.rules !== undefined) updateData.rules = body.rules;
+    if (body.whatsappLink !== undefined) updateData.whatsappLink = body.whatsappLink;
     if (body.date !== undefined) updateData.date = body.date;
     if (body.startTime !== undefined) updateData.startTime = body.startTime;
     if (body.registrationDeadline !== undefined) updateData.registrationDeadline = body.registrationDeadline;

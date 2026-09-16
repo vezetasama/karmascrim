@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, Trophy, Users, ArrowRight, Check, Compass } from 'lucide-react';
+import { useUser } from '@/context/UserContext';
 
 interface TournamentCardProps {
   tournament: {
@@ -18,17 +21,28 @@ interface TournamentCardProps {
     status: string;
     maps?: string | string[] | null;
     bannerUrl?: string | null;
-    registrations?: { id: string; status: string }[];
+    registrations?: { id: string; status: string; userId?: string }[];
   };
 }
 
 export default function TournamentCard({ tournament }: TournamentCardProps) {
+  const { user: currentUser } = useUser();
+
   const isFullMap = tournament.category === 'FULL_MAP';
   const percentageFull = Math.min(
     100,
     Math.round(((tournament.registeredSlots || 0) / (tournament.totalSlots || 48)) * 100)
   );
-  const hasPaidRegistration = tournament.registrations?.some((r) => r.status === 'CONFIRMED');
+
+  // Check if current logged in user has a confirmed registration for this tournament
+  const userRegistration = currentUser?.registrations?.find(
+    (r: any) => (r.tournamentId === tournament.id || r.tournament?.id === tournament.id)
+  ) || tournament.registrations?.find(
+    (r: any) => r.userId === currentUser?.id
+  );
+
+  const isUserPaid = userRegistration?.status === 'CONFIRMED';
+  const isUserPending = userRegistration?.status === 'PENDING';
 
   // Format YYYY-MM-DD into readable 13 Sep 2026
   const formatDate = (dateStr: string) => {
@@ -69,11 +83,19 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
   const mapsList = getMapsArray();
 
   const getStatusBadge = (status: string) => {
-    if (hasPaidRegistration) {
+    if (isUserPaid) {
       return (
-        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/40 shadow-sm">
-          <Check className="w-3.5 h-3.5" />
+        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-sm shadow-emerald-500/20">
+          <Check className="w-3.5 h-3.5 stroke-[3]" />
           PAID
+        </span>
+      );
+    }
+
+    if (isUserPending) {
+      return (
+        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-sm">
+          PENDING
         </span>
       );
     }
@@ -119,10 +141,14 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
   };
 
   return (
-    <div className="bg-[#121722] border border-[#262F45] rounded-3xl p-5 flex flex-col justify-between space-y-4 transition-all duration-300 hover:-translate-y-1 hover:border-[#FF2E4C]/50 hover:shadow-2xl hover:shadow-[#FF2E4C]/10 group relative overflow-hidden">
+    <div className={`bg-[#121722] border rounded-3xl p-5 flex flex-col justify-between space-y-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl group relative overflow-hidden ${
+      isUserPaid ? 'border-emerald-500/40 hover:border-emerald-500/80 hover:shadow-emerald-500/10' : 'border-[#262F45] hover:border-[#FF2E4C]/50 hover:shadow-[#FF2E4C]/10'
+    }`}>
       
       {/* Background Subtle Accent Glow */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF2E4C]/5 rounded-full blur-3xl pointer-events-none group-hover:bg-[#FF2E4C]/10 transition-colors" />
+      <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl pointer-events-none transition-colors ${
+        isUserPaid ? 'bg-emerald-500/10 group-hover:bg-emerald-500/15' : 'bg-[#FF2E4C]/5 group-hover:bg-[#FF2E4C]/10'
+      }`} />
 
       {/* TOP SECTION: Mode Badge & Registration Status */}
       <div className="flex items-center justify-between gap-3 relative z-10">
@@ -155,32 +181,6 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
         <h3 className="text-base sm:text-lg font-black text-white group-hover:text-[#FF2E4C] transition-colors line-clamp-2 uppercase tracking-wide">
           {tournament.name || 'FREE FIRE TOURNAMENT'}
         </h3>
-      </div>
-
-      {/* DEDICATED MAPS SECTION */}
-      <div className="relative z-10 space-y-1.5">
-        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-gray-400">
-          <Compass className="w-3.5 h-3.5 text-[#FF9F1C]" />
-          <span>{mapsList.length > 0 ? `${mapsList.length} MAPS` : 'MAPS'}</span>
-        </div>
-
-        {mapsList.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {mapsList.map((mapName) => (
-              <span
-                key={mapName}
-                className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262F45] text-xs font-bold text-gray-200 flex items-center gap-1 shadow-inner"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF2E4C]" />
-                {mapName}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <div className="px-2.5 py-1 rounded-lg bg-[#0B0E14]/60 border border-[#262F45]/60 text-xs font-medium text-gray-500 italic w-fit">
-            Map details coming soon
-          </div>
-        )}
       </div>
 
       {/* PRIZE POOL & ENTRY FEE SECTION */}
@@ -227,9 +227,20 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
       <div className="pt-1 relative z-10">
         <Link
           href={`/tournaments/${tournament.id}`}
-          className="w-full py-3 rounded-xl bg-[#161E2E] hover:bg-[#FF2E4C] text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border border-[#28354E] hover:border-[#FF2E4C] transition-all duration-300 shadow-md group-hover:shadow-[#FF2E4C]/20"
+          className={`w-full py-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border transition-all duration-300 shadow-md ${
+            isUserPaid
+              ? 'bg-emerald-950/40 hover:bg-emerald-600 text-emerald-400 hover:text-white border-emerald-500/40 hover:border-emerald-500 shadow-emerald-500/10'
+              : 'bg-[#161E2E] hover:bg-[#FF2E4C] text-white border-[#28354E] hover:border-[#FF2E4C] group-hover:shadow-[#FF2E4C]/20'
+          }`}
         >
-          <span>View Details</span>
+          {isUserPaid ? (
+            <>
+              <Check className="w-4 h-4 text-emerald-400 group-hover:text-white" />
+              <span>PAID — View Details</span>
+            </>
+          ) : (
+            <span>View Details</span>
+          )}
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>

@@ -136,14 +136,6 @@ export default function UserWalletPage() {
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
-
-            <Link
-              href="/wallet/add-money"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#FF2E4C] to-[#FF9F1C] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#FF2E4C]/25 hover:scale-105 active:scale-95 transition-all"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Add Money</span>
-            </Link>
           </div>
         </div>
 

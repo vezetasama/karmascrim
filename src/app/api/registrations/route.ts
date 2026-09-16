@@ -126,82 +126,92 @@ export async function POST(request: Request) {
     }
 
     // Execute registration and atomic wallet deduction in a database transaction
-    const result = await db.$transaction(async (tx) => {
-      const isFree = entryFee === 0;
+    const result = await db.$transaction(
+      async (tx) => {
+        const isFree = entryFee === 0;
 
-      // 1. Create registration record
-      const registration = await tx.registration.create({
-        data: {
-          registrationId,
-          tournamentId,
-          teamId: teamId || null,
-          userId: userSession.id,
-          status: 'CONFIRMED',
-          paymentStatus: 'VERIFIED',
-        },
-        include: {
-          tournament: true,
-          team: true,
-        },
-      });
-
-      // 2. Increment registered slots
-      await tx.tournament.update({
-        where: { id: tournamentId },
-        data: { registeredSlots: { increment: 1 } },
-      });
-
-      // 3. Deduct entry fee from wallet if entry fee > 0
-      if (entryFee > 0) {
-        const wallet = await tx.wallet.findUnique({ where: { userId: userSession.id } });
-        if (!wallet || wallet.balance < entryFee) {
-          throw new Error('Insufficient wallet balance to register.');
-        }
-
-        const balanceBefore = wallet.balance;
-        let remFee = entryFee;
-        let newDepositBal = wallet.depositBalance ?? 0;
-        let newWinningsBal = wallet.winningsBalance ?? 0;
-
-        if (newDepositBal >= remFee) {
-          newDepositBal -= remFee;
-          remFee = 0;
-        } else {
-          remFee -= newDepositBal;
-          newDepositBal = 0;
-          newWinningsBal = Math.max(0, newWinningsBal - remFee);
-        }
-
-        const balanceAfter = newDepositBal + newWinningsBal;
-
-        await tx.wallet.update({
-          where: { id: wallet.id },
+        // 1. Create registration record
+        const registration = await tx.registration.create({
           data: {
-            depositBalance: newDepositBal,
-            winningsBalance: newWinningsBal,
-            balance: balanceAfter,
-          },
-        });
-
-        await tx.walletTransaction.create({
-          data: {
-            walletId: wallet.id,
+            registrationId,
+            tournamentId,
+            teamId: teamId || null,
             userId: userSession.id,
-            type: 'ENTRY_FEE',
-            amount: -entryFee,
-            balanceBefore,
-            balanceAfter,
-            description: `Tournament Entry Fee: ${tournament.name}`,
-            referenceId: registrationId,
+            status: 'CONFIRMED',
+            paymentStatus: 'VERIFIED',
+          },
+          include: {
+            tournament: true,
+            team: true,
           },
         });
+
+        // 2. Increment registered slots
+        await tx.tournament.update({
+          where: { id: tournamentId },
+          data: { registeredSlots: { increment: 1 } },
+        });
+
+        // 3. Deduct entry fee from wallet if entry fee > 0
+        if (entryFee > 0) {
+          const wallet = await tx.wallet.findUnique({ where: { userId: userSession.id } });
+          if (!wallet || wallet.balance < entryFee) {
+            throw new Error('Insufficient wallet balance to register.');
+          }
+
+          const balanceBefore = wallet.balance;
+          let remFee = entryFee;
+          let newDepositBal = wallet.depositBalance ?? 0;
+          let newWinningsBal = wallet.winningsBalance ?? 0;
+
+          if (newDepositBal >= remFee) {
+            newDepositBal -= remFee;
+            remFee = 0;
+          } else {
+            remFee -= newDepositBal;
+            newDepositBal = 0;
+            newWinningsBal = Math.max(0, newWinningsBal - remFee);
+          }
+
+          const balanceAfter = newDepositBal + newWinningsBal;
+
+          await tx.wallet.update({
+            where: { id: wallet.id },
+            data: {
+              depositBalance: newDepositBal,
+              winningsBalance: newWinningsBal,
+              balance: balanceAfter,
+            },
+          });
+
+          await tx.walletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              userId: userSession.id,
+              type: 'ENTRY_FEE',
+              amount: -entryFee,
+              balanceBefore,
+              balanceAfter,
+              description: `Tournament Entry Fee: ${tournament.name}`,
+              referenceId: registrationId,
+            },
+          });
+        }
+
+        return registration;
+      },
+      {
+        timeout: 20000,
+        maxWait: 10000,
       }
+    );
 
-      // 4. Send notification
+    // 4. Send notification outside the transaction block
+    try {
       await notifyTournamentJoined(userSession.id, tournament.name, tournament.id);
-
-      return registration;
-    });
+    } catch (e) {
+      console.error('Notification dispatch error:', e);
+    }
 
     return NextResponse.json({ success: true, registration: result });
   } catch (error: any) {

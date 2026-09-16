@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Flame, LogOut, Bell, LayoutDashboard, Shield, Wallet, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
+import { Flame, Home, Wallet, User, Shield, Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 
 function getRelativeTime(dateString: string) {
@@ -39,7 +39,7 @@ function getTypeBadge(type?: string) {
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user: currentUser, balance, loading, refreshUser } = useUser();
+  const { user: currentUser, balance, loading } = useUser();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -127,15 +127,6 @@ export default function Navbar() {
     } catch (e) {}
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      await refreshUser();
-      router.push('/');
-      router.refresh();
-    } catch (e) {}
-  };
-
   const markAllRead = async () => {
     try {
       await fetch('/api/notifications', {
@@ -161,6 +152,171 @@ export default function Navbar() {
 
   const formattedBalance = (balance ?? 0).toLocaleString();
 
+  const navItems = [
+    {
+      label: 'Home',
+      href: '/',
+      icon: Home,
+      exact: true,
+      requiresAuth: false,
+    },
+    {
+      label: 'Balance',
+      href: '/wallet',
+      icon: Wallet,
+      exact: true,
+      requiresAuth: true,
+    },
+    {
+      label: 'Profile',
+      href: '/dashboard',
+      icon: User,
+      exact: false,
+      requiresAuth: true,
+    },
+  ];
+
+  const handleNavClick = (e: React.MouseEvent, item: any) => {
+    if (item.requiresAuth && !currentUser) {
+      e.preventDefault();
+      router.push(`/login?redirect=${encodeURIComponent(item.href)}`);
+    }
+  };
+
+  const renderNotificationsDropdown = () => (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setNotificationsOpen(!notificationsOpen)}
+        className="p-2 rounded-xl bg-[#121722] border border-[#262F45] text-gray-300 hover:text-white relative hover:border-[#FF2E4C] transition-colors"
+        aria-label="Notifications"
+      >
+        <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#FF2E4C] text-white text-[10px] sm:text-[11px] font-bold flex items-center justify-center animate-bounce shadow-md shadow-[#FF2E4C]/50">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Notifications Dropdown Panel */}
+      {notificationsOpen && (
+        <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-[#121722] border border-[#262F45] rounded-2xl shadow-2xl p-4 z-50">
+          <div className="flex items-center justify-between pb-3 border-b border-[#262F45]">
+            <div className="flex items-center space-x-2">
+              <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">Notifications</h4>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-[#FF2E4C]/20 text-[#FF2E4C] text-[10px] font-bold border border-[#FF2E4C]/30">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                className="flex items-center gap-1 text-[11px] text-[#FF9F1C] hover:underline font-semibold"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                <span>Mark all read</span>
+              </button>
+            )}
+          </div>
+
+          {/* Push Notification Toggle Banner */}
+          {pushPermission === 'default' && (
+            <div className="my-2 p-2.5 rounded-xl bg-[#FF9F1C]/10 border border-[#FF9F1C]/30 flex items-center justify-between text-xs">
+              <span className="text-gray-300">Enable Desktop Push Alerts?</span>
+              <button
+                onClick={requestPushPermission}
+                className="px-2.5 py-1 rounded-lg bg-[#FF9F1C] text-black font-bold hover:bg-[#FF9F1C]/90 text-[10px] uppercase"
+              >
+                Allow
+              </button>
+            </div>
+          )}
+
+          <div className="max-h-72 overflow-y-auto my-2 space-y-2 pr-1 custom-scrollbar">
+            {notifications.length === 0 ? (
+              <div className="text-center py-6">
+                <Bell className="w-8 h-8 text-gray-600 mx-auto mb-2 opacity-50" />
+                <p className="text-xs text-gray-400">No notifications yet.</p>
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const badge = getTypeBadge(n.type);
+                return (
+                  <div
+                    key={n.id}
+                    className={`group relative p-3 rounded-xl border transition-all ${
+                      n.read
+                        ? 'bg-[#0B0E14]/40 border-[#262F45]/60 text-gray-400'
+                        : 'bg-[#1A2234] border-[#FF2E4C]/40 text-white shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border flex items-center gap-1 ${badge.color}`}>
+                          <span>{badge.icon}</span>
+                          <span>{badge.label}</span>
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {getRelativeTime(n.createdAt)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => deleteNotification(e, n.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-opacity"
+                        title="Delete notification"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <Link
+                      href={n.actionUrl || n.linkUrl || '/notifications'}
+                      onClick={() => setNotificationsOpen(false)}
+                      className="block"
+                    >
+                      <div className="font-bold text-xs sm:text-sm text-gray-100 hover:text-[#FF9F1C] transition-colors flex items-center justify-between">
+                        <span>{n.title}</span>
+                        {(n.actionUrl || n.linkUrl) && (
+                          <ExternalLink className="w-3 h-3 text-gray-400 inline ml-1 opacity-60" />
+                        )}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-300 leading-snug">{n.message}</div>
+                    </Link>
+
+                    {n.actionText && (
+                      <div className="mt-2 text-right">
+                        <Link
+                          href={n.actionUrl || n.linkUrl || '/notifications'}
+                          onClick={() => setNotificationsOpen(false)}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FF2E4C] hover:text-[#FF9F1C] transition-colors"
+                        >
+                          <span>{n.actionText}</span>
+                          <span>→</span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="pt-2 border-t border-[#262F45] text-center">
+            <Link
+              href="/notifications"
+              onClick={() => setNotificationsOpen(false)}
+              className="text-xs font-bold text-[#FF2E4C] hover:text-[#FF9F1C] uppercase tracking-wider block py-1"
+            >
+              View All Notifications Page →
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <nav className="sticky top-0 z-50 bg-[#0B0E14]/90 backdrop-blur-md border-b border-[#262F45]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -183,220 +339,98 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden lg:flex items-center space-x-6">
-            <Link
-              href="/tournaments"
-              className={`text-sm font-semibold transition-colors ${
-                pathname === '/tournaments' ? 'text-[#FF2E4C]' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              All Tournaments
-            </Link>
-            <Link
-              href="/notifications"
-              className={`text-sm font-semibold transition-colors ${
-                pathname === '/notifications' ? 'text-[#FF2E4C]' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              Notifications
-            </Link>
+          {/* DESKTOP VIEW RIGHT SIDE (hidden on mobile, visible on md+) */}
+          <div className="hidden md:flex items-center space-x-2 sm:space-x-3">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.exact
+                ? pathname === item.href
+                : pathname.startsWith(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={(e) => handleNavClick(e, item)}
+                  className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    isActive
+                      ? 'bg-[#FF2E4C]/10 text-[#FF2E4C] border border-[#FF2E4C]/40 shadow-[0_0_12px_rgba(255,46,76,0.2)]'
+                      : 'bg-[#121722] text-gray-300 border border-[#262F45] hover:border-[#FF2E4C] hover:text-white'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#FF2E4C]' : 'text-gray-400'}`} />
+                  <span>{item.label}</span>
+                  {item.label === 'Balance' && currentUser && balance !== undefined && (
+                    <span className="ml-1 text-[10px] sm:text-[11px] font-extrabold text-[#FF9F1C] bg-[#FF9F1C]/10 px-1.5 py-0.5 rounded-md border border-[#FF9F1C]/20">
+                      NPR {formattedBalance}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* Notifications Bell Dropdown (Desktop) */}
+            {currentUser && renderNotificationsDropdown()}
+
+            {/* Admin Panel Link (Admin Only) */}
+            {currentUser?.role === 'ADMIN' && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-red-950/40 border border-red-500/40 text-red-400 text-xs font-bold hover:bg-red-900/50 transition-all flex-shrink-0"
+              >
+                <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                <span className="text-[11px] sm:text-xs">Admin</span>
+              </Link>
+            )}
+
+            {/* Logged Out State: Login Link */}
+            {!currentUser && !loading && (
+              <Link
+                href="/login"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl glow-btn-red text-white text-xs font-bold uppercase tracking-wider"
+              >
+                Login
+              </Link>
+            )}
           </div>
 
-          {/* Right Side: User Auth / Balance & Profile Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* MOBILE VIEW RIGHT SIDE (visible on mobile < md, hidden on md+) */}
+          <div className="flex md:hidden items-center space-x-2">
             {loading ? (
-              <div className="w-24 h-8 bg-[#121722] animate-pulse rounded-xl border border-[#262F45]" />
+              <div className="w-20 h-7 bg-[#121722] animate-pulse rounded-xl border border-[#262F45]" />
             ) : currentUser ? (
-              <div className="flex items-center space-x-2 sm:space-x-3">
-
-                {/* Balance Pill — Dynamic for Logged-In User */}
+              <>
+                {/* Mobile Balance Pill */}
                 <Link
                   href="/wallet"
-                  title="Available Balance — Click to Deposit / View History"
-                  className="flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#121722] border border-[#262F45] hover:border-[#FF2E4C] transition-all group shadow-inner"
+                  className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-[#121722] border border-[#262F45] text-xs font-extrabold text-white"
                 >
-                  <span className="text-xs sm:text-sm">💰</span>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">NPR</span>
-                    <span className="text-xs sm:text-sm font-extrabold text-white group-hover:text-[#FF9F1C] transition-colors">
-                      {formattedBalance}
-                    </span>
-                  </div>
+                  <span>💰</span>
+                  <span className="text-[10px] font-bold text-gray-400">NPR</span>
+                  <span className="text-xs text-[#FF9F1C]">{formattedBalance}</span>
                 </Link>
 
-                {/* Notifications Bell Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setNotificationsOpen(!notificationsOpen)}
-                    className="p-2 rounded-xl bg-[#121722] border border-[#262F45] text-gray-300 hover:text-white relative hover:border-[#FF2E4C] transition-colors"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#FF2E4C] text-white text-[10px] sm:text-[11px] font-bold flex items-center justify-center animate-bounce shadow-md shadow-[#FF2E4C]/50">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
+                {/* Mobile Notifications Bell */}
+                {renderNotificationsDropdown()}
 
-                  {/* Notifications Dropdown Panel */}
-                  {notificationsOpen && (
-                    <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-[#121722] border border-[#262F45] rounded-2xl shadow-2xl p-4 z-50">
-                      <div className="flex items-center justify-between pb-3 border-b border-[#262F45]">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">Notifications</h4>
-                          {unreadCount > 0 && (
-                            <span className="px-2 py-0.5 rounded-full bg-[#FF2E4C]/20 text-[#FF2E4C] text-[10px] font-bold border border-[#FF2E4C]/30">
-                              {unreadCount} new
-                            </span>
-                          )}
-                        </div>
-                        {unreadCount > 0 && (
-                          <button
-                            onClick={markAllRead}
-                            className="flex items-center gap-1 text-[11px] text-[#FF9F1C] hover:underline font-semibold"
-                          >
-                            <CheckCheck className="w-3.5 h-3.5" />
-                            <span>Mark all read</span>
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Push Notification Toggle Banner */}
-                      {pushPermission === 'default' && (
-                        <div className="my-2 p-2.5 rounded-xl bg-[#FF9F1C]/10 border border-[#FF9F1C]/30 flex items-center justify-between text-xs">
-                          <span className="text-gray-300">Enable Desktop Push Alerts?</span>
-                          <button
-                            onClick={requestPushPermission}
-                            className="px-2.5 py-1 rounded-lg bg-[#FF9F1C] text-black font-bold hover:bg-[#FF9F1C]/90 text-[10px] uppercase"
-                          >
-                            Allow
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="max-h-72 overflow-y-auto my-2 space-y-2 pr-1 custom-scrollbar">
-                        {notifications.length === 0 ? (
-                          <div className="text-center py-6">
-                            <Bell className="w-8 h-8 text-gray-600 mx-auto mb-2 opacity-50" />
-                            <p className="text-xs text-gray-400">No notifications yet.</p>
-                          </div>
-                        ) : (
-                          notifications.map((n) => {
-                            const badge = getTypeBadge(n.type);
-                            return (
-                              <div
-                                key={n.id}
-                                className={`group relative p-3 rounded-xl border transition-all ${
-                                  n.read
-                                    ? 'bg-[#0B0E14]/40 border-[#262F45]/60 text-gray-400'
-                                    : 'bg-[#1A2234] border-[#FF2E4C]/40 text-white shadow-sm'
-                                }`}
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex items-center gap-1.5 mb-1">
-                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border flex items-center gap-1 ${badge.color}`}>
-                                      <span>{badge.icon}</span>
-                                      <span>{badge.label}</span>
-                                    </span>
-                                    <span className="text-[10px] text-gray-500">
-                                      {getRelativeTime(n.createdAt)}
-                                    </span>
-                                  </div>
-                                  <button
-                                    onClick={(e) => deleteNotification(e, n.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-opacity"
-                                    title="Delete notification"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-
-                                <Link
-                                  href={n.actionUrl || n.linkUrl || '/notifications'}
-                                  onClick={() => setNotificationsOpen(false)}
-                                  className="block"
-                                >
-                                  <div className="font-bold text-xs sm:text-sm text-gray-100 hover:text-[#FF9F1C] transition-colors flex items-center justify-between">
-                                    <span>{n.title}</span>
-                                    {(n.actionUrl || n.linkUrl) && (
-                                      <ExternalLink className="w-3 h-3 text-gray-400 inline ml-1 opacity-60" />
-                                    )}
-                                  </div>
-                                  <div className="mt-1 text-xs text-gray-300 leading-snug">{n.message}</div>
-                                </Link>
-
-                                {n.actionText && (
-                                  <div className="mt-2 text-right">
-                                    <Link
-                                      href={n.actionUrl || n.linkUrl || '/notifications'}
-                                      onClick={() => setNotificationsOpen(false)}
-                                      className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FF2E4C] hover:text-[#FF9F1C] transition-colors"
-                                    >
-                                      <span>{n.actionText}</span>
-                                      <span>→</span>
-                                    </Link>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-
-                      <div className="pt-2 border-t border-[#262F45] text-center">
-                        <Link
-                          href="/notifications"
-                          onClick={() => setNotificationsOpen(false)}
-                          className="text-xs font-bold text-[#FF2E4C] hover:text-[#FF9F1C] uppercase tracking-wider block py-1"
-                        >
-                          View All Notifications Page →
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Admin Panel Link (Admin Only) */}
+                {/* Mobile Admin Icon Link */}
                 {currentUser?.role === 'ADMIN' && (
                   <Link
                     href="/admin"
-                    className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-red-950/40 border border-red-500/40 text-red-400 text-xs font-bold hover:bg-red-900/50 transition-all flex-shrink-0"
+                    className="p-1.5 rounded-xl bg-red-950/40 border border-red-500/40 text-red-400"
+                    title="Admin"
                   >
-                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
-                    <span className="text-[11px] sm:text-xs">Admin</span>
+                    <Shield className="w-4 h-4" />
                   </Link>
                 )}
-
-                {/* Dashboard Link */}
-                <Link
-                  href="/dashboard"
-                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121722] border border-[#262F45] text-white text-xs font-semibold hover:border-[#FF2E4C] transition-all"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-[#FF2E4C]" />
-                  <span>Dashboard</span>
-                </Link>
-
-                {/* Logout Button */}
-                <button
-                  onClick={handleLogout}
-                  className="hidden sm:block p-2 rounded-xl bg-[#121722] border border-[#262F45] text-gray-400 hover:text-red-400 hover:border-red-500/40 transition-colors"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
+              </>
             ) : (
-              /* Logged Out State: Sign Up */
-              <div className="flex items-center">
-                <Link
-                  href="/register"
-                  className="px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl glow-btn-red text-white text-xs font-bold uppercase tracking-wider"
-                >
-                  Login
-                </Link>
-              </div>
+              <Link
+                href="/login"
+                className="px-3 py-1.5 rounded-xl glow-btn-red text-white text-xs font-bold uppercase tracking-wider"
+              >
+                Login
+              </Link>
             )}
           </div>
 

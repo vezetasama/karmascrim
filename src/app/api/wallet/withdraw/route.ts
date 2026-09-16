@@ -100,40 +100,50 @@ export async function POST(request: Request) {
     const netAmount = withdrawAmount - fee;
 
     // Execute atomic transaction: Reserve earnings and create WithdrawalRequest
-    const result = await db.$transaction(async (tx) => {
-      const newWinningsBal = currentWinnings - withdrawAmount;
-      const newTotalBal = (wallet.depositBalance ?? 0) + newWinningsBal;
+    const result = await db.$transaction(
+      async (tx) => {
+        const newWinningsBal = currentWinnings - withdrawAmount;
+        const newTotalBal = (wallet.depositBalance ?? 0) + newWinningsBal;
 
-      // 1. Reserve/Deduct from wallet winnings balance
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: {
-          winningsBalance: newWinningsBal,
-          balance: newTotalBal,
-        },
-      });
+        // 1. Reserve/Deduct from wallet winnings balance
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            winningsBalance: newWinningsBal,
+            balance: newTotalBal,
+          },
+        });
 
-      // 2. Create WithdrawalRequest record
-      const withdrawalRequest = await tx.withdrawalRequest.create({
-        data: {
-          requestId,
-          userId: userSession.id,
-          amount: withdrawAmount,
-          method,
-          accountName: accountName.trim(),
-          accountNumber: accountNumber.trim(),
-          bankName: bankName ? bankName.trim() : null,
-          fee,
-          netAmount,
-          status: 'PENDING',
-        },
-      });
+        // 2. Create WithdrawalRequest record
+        const withdrawalRequest = await tx.withdrawalRequest.create({
+          data: {
+            requestId,
+            userId: userSession.id,
+            amount: withdrawAmount,
+            method,
+            accountName: accountName.trim(),
+            accountNumber: accountNumber.trim(),
+            bankName: bankName ? bankName.trim() : null,
+            fee,
+            netAmount,
+            status: 'PENDING',
+          },
+        });
 
-      // 3. Create Notification
+        return withdrawalRequest;
+      },
+      {
+        timeout: 20000,
+        maxWait: 10000,
+      }
+    );
+
+    // 3. Create Notification
+    try {
       await notifyWithdrawalRequested(userSession.id, withdrawAmount, requestId);
-
-      return withdrawalRequest;
-    });
+    } catch (e) {
+      console.error('Notification error:', e);
+    }
 
     return NextResponse.json({
       success: true,

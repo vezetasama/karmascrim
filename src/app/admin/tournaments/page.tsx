@@ -51,6 +51,7 @@ export default function AdminTournamentsPage() {
   const [format, setFormat] = useState('Squad');
   const [description, setDescription] = useState('');
   const [rules, setRules] = useState('');
+  const [whatsappLink, setWhatsappLink] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('07:00 PM');
   const [registrationDeadline, setRegistrationDeadline] = useState('06:30 PM');
@@ -114,6 +115,7 @@ export default function AdminTournamentsPage() {
     setFormat('Squad');
     setDescription('');
     setRules('');
+    setWhatsappLink('');
     setDate(new Date().toISOString().split('T')[0]);
     setStartTime('07:00 PM');
     setRegistrationDeadline('06:30 PM');
@@ -134,6 +136,7 @@ export default function AdminTournamentsPage() {
     setFormat(t.format);
     setDescription(t.description || '');
     setRules(t.rules || '');
+    setWhatsappLink(t.whatsappLink || '');
     setDate(t.date);
     setStartTime(t.startTime);
     setRegistrationDeadline(t.registrationDeadline);
@@ -171,6 +174,7 @@ export default function AdminTournamentsPage() {
       format,
       description,
       rules,
+      whatsappLink,
       date,
       startTime,
       registrationDeadline,
@@ -661,6 +665,20 @@ export default function AdminTournamentsPage() {
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1">WhatsApp Group Link (For Paid Players)</label>
+                  <input
+                    type="text"
+                    value={whatsappLink}
+                    onChange={(e) => setWhatsappLink(e.target.value)}
+                    placeholder="https://chat.whatsapp.com/..."
+                    className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                  />
+                  <span className="text-[10px] text-gray-500 mt-1 block">
+                    Confirmed paid players will see a floating WhatsApp circle button on the tournament detail page to join this chat.
+                  </span>
                 </div>
 
                 <div>

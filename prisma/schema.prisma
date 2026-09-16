@@ -40,6 +40,7 @@ model Tournament {
   format               String         // Squad, 1v1, 2v2, 4v4
   description          String?
   rules                String?
+  whatsappLink         String?
   date                 String         // YYYY-MM-DD
   startTime            String         // HH:MM AM/PM
   registrationDeadline String         // ISO string or formatted date/time

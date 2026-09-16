@@ -4,7 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import RegistrationModal from '@/components/RegistrationModal';
-import { Calendar, Clock, Trophy, Users, Shield, Lock, Unlock, Copy, Check, AlertCircle, ArrowLeft, Compass } from 'lucide-react';
+import { Calendar, Clock, Trophy, Users, Shield, Lock, Unlock, Copy, Check, AlertCircle, ArrowLeft, Compass, MessageCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -105,7 +105,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const isConfirmedParticipant = userRegistration?.status === 'CONFIRMED';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0E14] text-white">
+    <div className="min-h-screen flex flex-col bg-[#0B0E14] text-white relative">
       <Navbar />
 
       <main className="flex-1 py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -135,67 +135,153 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               <h1 className="text-2xl sm:text-4xl font-extrabold text-white">{tournament.name}</h1>
             </div>
 
-            {isConfirmedParticipant && (
-              <div className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    {tournament.roomAccessGranted ? (
-                      <Unlock className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <Lock className="w-4 h-4 text-[#FF2E4C]" />
+            {isConfirmedParticipant ? (
+              <>
+                {/* WHATSAPP GROUP CHAT LINK FOR PAID PLAYERS */}
+                <div className="p-5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-[#25D366]/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold shadow-lg shadow-[#25D366]/30 flex-shrink-0">
+                      <MessageCircle className="w-6 h-6 fill-current" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider">
+                        Official Match WhatsApp Group
+                      </h4>
+                      <p className="text-[11px] text-gray-300 mt-0.5">
+                        Join to connect with match host &amp; receive instant room code alerts.
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={tournament.whatsappLink || 'https://chat.whatsapp.com'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-[#25D366]/30 flex-shrink-0"
+                  >
+                    <span>Join Group</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                {/* ROOM CODE DETAILS */}
+                <div className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      {tournament.roomAccessGranted ? (
+                        <Unlock className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Lock className="w-4 h-4 text-[#FF2E4C]" />
+                      )}
+                      Match Lobby Room Code
+                    </h3>
+                    {tournament.roomReleased && (
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                        Released
+                      </span>
                     )}
-                    Match Lobby Room Code
-                  </h3>
-                  {tournament.roomReleased && (
-                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                      Released
-                    </span>
+                  </div>
+
+                  {tournament.roomAccessGranted && tournament.roomId ? (
+                    <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/40 space-y-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-300">Room ID:</span>
+                        <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
+                          <span>{tournament.roomId}</span>
+                          <button
+                            onClick={() => copyToClipboard(tournament.roomId, 'room')}
+                            className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
+                          >
+                            {copiedRoom ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs pt-2 border-t border-emerald-500/20">
+                        <span className="text-gray-300">Room Password:</span>
+                        <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
+                          <span>{tournament.roomPassword}</span>
+                          <button
+                            onClick={() => copyToClipboard(tournament.roomPassword, 'pass')}
+                            className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
+                          >
+                            {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-[#0B0E14] border border-[#262F45] text-center space-y-2">
+                      <Lock className="w-8 h-8 text-gray-600 mx-auto" />
+                      <div className="text-xs font-bold text-gray-300">
+                        {!tournament.roomReleased
+                          ? 'Room details have not been released by Admin yet.'
+                          : 'Room code releasing shortly.'}
+                      </div>
+                      <p className="text-[11px] text-gray-500">
+                        Room details are automatically unlocked here 15 minutes before start time once released by Admin.
+                      </p>
+                    </div>
                   )}
                 </div>
 
-                {tournament.roomAccessGranted && tournament.roomId ? (
-                  <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/40 space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-300">Room ID:</span>
-                      <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
-                        <span>{tournament.roomId}</span>
-                        <button
-                          onClick={() => copyToClipboard(tournament.roomId, 'room')}
-                          className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
-                        >
-                          {copiedRoom ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </div>
+                {/* TOURNAMENT RULES — ONLY SHOWN AFTER PAYMENT CONFIRMATION */}
+                <div className="p-6 rounded-2xl bg-[#121722] border border-emerald-500/30 space-y-4 shadow-lg shadow-emerald-500/5">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#262F45]">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-emerald-400" />
+                      Official Tournament Rules & Guidelines
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex items-center gap-1">
+                      <Check className="w-3 h-3 stroke-[3]" /> Paid & Unlocked
+                    </span>
+                  </div>
 
-                    <div className="flex items-center justify-between text-xs pt-2 border-t border-emerald-500/20">
-                      <span className="text-gray-300">Room Password:</span>
-                      <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
-                        <span>{tournament.roomPassword}</span>
-                        <button
-                          onClick={() => copyToClipboard(tournament.roomPassword, 'pass')}
-                          className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
-                        >
-                          {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
+                  {tournament.rules ? (
+                    <div className="text-xs text-gray-300 leading-relaxed whitespace-pre-line bg-[#0B0E14] p-4 rounded-xl border border-[#262F45]">
+                      {tournament.rules}
+                    </div>
+                  ) : (
+                    <div className="space-y-3 text-xs text-gray-300">
+                      <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-1">
+                        <div className="font-bold text-white flex items-center gap-1.5">
+                          <span className="text-[#FF2E4C] font-mono">1.</span> Punctuality & Lobby Entry
+                        </div>
+                        <p className="text-gray-400 leading-snug">
+                          Room ID and Password are disclosed 15 minutes before match start. Players must join their assigned slot immediately. Delaying match start is prohibited.
+                        </p>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-1">
+                        <div className="font-bold text-white flex items-center gap-1.5">
+                          <span className="text-[#FF2E4C] font-mono">2.</span> Anti-Cheat & Fair Play Policy
+                        </div>
+                        <p className="text-gray-400 leading-snug">
+                          Use of any hacks, scripts, modified APKs, or third-party tools will result in permanent account ban and immediate forfeiture of entry fee & prize pool.
+                        </p>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-1">
+                        <div className="font-bold text-white flex items-center gap-1.5">
+                          <span className="text-[#FF2E4C] font-mono">3.</span> Confidential Credentials
+                        </div>
+                        <p className="text-gray-400 leading-snug">
+                          Sharing Room ID or Password with non-registered players will lead to immediate squad disqualification without refund.
+                        </p>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-1">
+                        <div className="font-bold text-white flex items-center gap-1.5">
+                          <span className="text-[#FF2E4C] font-mono">4.</span> Match Proof & Winnings Payout
+                        </div>
+                        <p className="text-gray-400 leading-snug">
+                          Team captains must capture a clear end-game screenshot of the leaderboard. Winnings will be auto-credited to your Karma Scrims wallet within 30 minutes.
+                        </p>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-xl bg-[#0B0E14] border border-[#262F45] text-center space-y-2">
-                    <Lock className="w-8 h-8 text-gray-600 mx-auto" />
-                    <div className="text-xs font-bold text-gray-300">
-                      {!tournament.roomReleased
-                        ? 'Room details have not been released by Admin yet.'
-                        : 'Room code releasing shortly.'}
-                    </div>
-                    <p className="text-[11px] text-gray-500">
-                      Room details are automatically unlocked here 15 minutes before start time once released by Admin.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              </>
+            ) : null}
 
             {/* REGISTERED TEAMS ROSTER */}
             <div className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
@@ -361,6 +447,21 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         </div>
 
       </main>
+
+      {/* FLOATING CIRCULAR WHATSAPP BUTTON FOR CONFIRMED PAID PLAYERS */}
+      {isConfirmedParticipant && (
+        <a
+          href={tournament.whatsappLink || 'https://chat.whatsapp.com'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-20 md:bottom-8 right-5 sm:right-8 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center shadow-2xl shadow-[#25D366]/50 hover:scale-110 transition-all duration-300"
+          title="Join Official Tournament WhatsApp Group Chat"
+        >
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-[#25D366] flex items-center justify-center shadow-inner">
+            <MessageCircle className="w-5 h-5 sm:w-5 sm:h-5 fill-current" />
+          </div>
+        </a>
+      )}
 
       {/* REGISTRATION & FONEPAY MODAL */}
       <RegistrationModal

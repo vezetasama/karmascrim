@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
       include: {
         registrations: {
-          select: { id: true, status: true },
+          select: { id: true, status: true, userId: true },
         },
       },
     });
@@ -62,6 +62,7 @@ export async function POST(request: Request) {
       format,
       description,
       rules,
+      whatsappLink,
       date,
       startTime,
       registrationDeadline,
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
         format,
         description: description || null,
         rules: rules || null,
+        whatsappLink: whatsappLink || null,
         date,
         startTime,
         registrationDeadline: registrationDeadline || `${date} ${startTime}`,
