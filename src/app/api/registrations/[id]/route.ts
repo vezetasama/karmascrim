@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userSession = await getCurrentUser();
@@ -12,7 +12,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const registrationId = params.id;
+    const { id } = await params;
+    const registrationId = id;
     const body = await request.json();
     const { freeFireName, freeFireUid, teamName } = body;
 
