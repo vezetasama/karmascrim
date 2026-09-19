@@ -19,8 +19,7 @@ async function getHomePageData() {
       where: {
         status: { in: ['REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'LIVE'] },
       },
-      orderBy: { createdAt: 'desc' },
-      take: 12,
+      take: 50,
     });
 
     const totalTournamentsCount = await db.tournament.count();

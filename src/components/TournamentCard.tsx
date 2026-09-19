@@ -270,7 +270,7 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
           {isUserPaid ? (
             <>
               <Check className="w-4 h-4 text-emerald-400 group-hover:text-white" />
-              <span>PAID — Register Now</span>
+              <span>PAID — View Details</span>
             </>
           ) : (
             <span>Register Now</span>

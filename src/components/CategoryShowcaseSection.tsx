@@ -2,18 +2,113 @@
 
 import React, { useState } from 'react';
 import TournamentCard from '@/components/TournamentCard';
-import { Crosshair, Zap, ArrowRight, Trophy, Flame } from 'lucide-react';
+import { Crosshair, Zap, ArrowRight, Trophy, Flame, Gamepad2 } from 'lucide-react';
+
+import { useUser } from '@/context/UserContext';
 
 interface CategoryShowcaseSectionProps {
   initialTournaments: any[];
 }
 
+function getTournamentTimestamp(t: any): number {
+  try {
+    if (t.date && t.startTime) {
+      const dateStr = String(t.date).trim();
+      const timeStr = String(t.startTime).trim();
+      
+      let hour = 0;
+      let minute = 0;
+      const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+      if (ampmMatch) {
+        hour = parseInt(ampmMatch[1], 10);
+        minute = parseInt(ampmMatch[2], 10);
+        const period = ampmMatch[3]?.toUpperCase();
+        if (period === 'PM' && hour < 12) hour += 12;
+        if (period === 'AM' && hour === 12) hour = 0;
+      } else {
+        const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+        if (match24) {
+          hour = parseInt(match24[1], 10);
+          minute = parseInt(match24[2], 10);
+        }
+      }
+      
+      const dateParts = dateStr.split('-');
+      if (dateParts.length === 3) {
+        const y = parseInt(dateParts[0], 10);
+        const m = parseInt(dateParts[1], 10) - 1;
+        const d = parseInt(dateParts[2], 10);
+        const dObj = new Date(y, m, d, hour, minute, 0);
+        if (!isNaN(dObj.getTime())) {
+          return dObj.getTime();
+        }
+      }
+    }
+  } catch (e) {
+    // fallback
+  }
+  
+  return t.createdAt ? new Date(t.createdAt).getTime() : 0;
+}
+
+function isUserPaidTournament(t: any, currentUser: any): boolean {
+  if (!currentUser) return false;
+
+  // Check user's registrations from context
+  const userRegFromUser = currentUser.registrations?.find(
+    (r: any) => (r.tournamentId === t.id || r.tournament?.id === t.id) && (r.status === 'CONFIRMED' || r.status === 'PAID')
+  );
+  if (userRegFromUser) return true;
+
+  // Check tournament's registrations array
+  const userRegFromTournament = t.registrations?.find(
+    (r: any) => r.userId === currentUser.id && (r.status === 'CONFIRMED' || r.status === 'PAID')
+  );
+  if (userRegFromTournament) return true;
+
+  return false;
+}
+
+function getTournamentPriority(t: any, currentUser: any): number {
+  if (isUserPaidTournament(t, currentUser)) {
+    return 3; // Top priority: Current user registered & paid/confirmed
+  }
+  if ((t.entryFee || 0) > 0) {
+    return 2; // General paid tournaments
+  }
+  return 1; // Free entry tournaments
+}
+
+function sortHomeTournaments(tournaments: any[], currentUser: any) {
+  return [...tournaments].sort((a, b) => {
+    const priorityA = getTournamentPriority(a, currentUser);
+    const priorityB = getTournamentPriority(b, currentUser);
+
+    // 1. User registered/paid first (3 > 2 > 1)
+    if (priorityA !== priorityB) {
+      return priorityB - priorityA;
+    }
+
+    // 2. Time wise series (chronological: earliest scheduled start date & time first)
+    const timeA = getTournamentTimestamp(a);
+    const timeB = getTournamentTimestamp(b);
+
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+}
+
 export default function CategoryShowcaseSection({ initialTournaments = [] }: CategoryShowcaseSectionProps) {
+  const { user: currentUser } = useUser();
   const [activeCategory, setActiveCategory] = useState<'FULL_MAP' | 'CLASH_SQUAD'>('FULL_MAP');
 
-  // Filter tournaments dynamically by active category
-  const filteredTournaments = initialTournaments.filter(
-    (t) => t.category === activeCategory
+  // Filter tournaments dynamically by active category and sort (User paid first, then paid, then free, time wise series)
+  const filteredTournaments = sortHomeTournaments(
+    initialTournaments.filter((t) => t.category === activeCategory),
+    currentUser
   );
 
   return (
@@ -66,16 +161,12 @@ export default function CategoryShowcaseSection({ initialTournaments = [] }: Cat
         {/* TOURNAMENT GAMES SECTION HEADER & CARDS GRID */}
         <section className="space-y-6 pt-4 border-t border-[#262F45]/60">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-[#FF2E4C] flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5 text-[#FF2E4C]" />
-                Live &amp; Upcoming Tournaments
+            <div className="flex items-center gap-2 text-[#FF2E4C]">
+              <Gamepad2 className="w-5 h-5" />
+              <span className="text-xl sm:text-2xl font-extrabold uppercase tracking-wide text-white">
+                G<span className="lowercase">ames</span>
               </span>
-              <h2 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wide text-white mt-0.5">
-                {activeCategory === 'FULL_MAP' ? 'Full Map Squad Scrims' : 'Clash Squad Duels'}
-              </h2>
             </div>
-
           </div>
 
           {/* TOURNAMENT GRID */}

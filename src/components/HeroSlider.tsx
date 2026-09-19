@@ -26,7 +26,7 @@ const DEFAULT_FALLBACK_BANNER: BannerItem = {
   title: "KARMA SCRIMS FREE FIRE TOURNAMENT",
   subtitle: 'Play · Compete · Win',
   buttonText: 'JOIN NOW',
-  buttonLink: '/tournaments',
+  buttonLink: '/',
   imageUrl: '/images/hero-banner-1.png',
   isActive: true,
   sortOrder: 1,
