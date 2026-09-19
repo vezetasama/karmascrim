@@ -79,7 +79,7 @@ export default function AdminDepositsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to approve deposit.');
 
-      setSuccessMsg(`Deposit approved! NPR ${data.deposit.amount} credited to user wallet.`);
+      setSuccessMsg(`Deposit approved! 🪙 ${data.deposit.amount} COINS credited to user wallet.`);
       setTimeout(() => setSuccessMsg(''), 4000);
       fetchDeposits();
     } catch (err: any) {
@@ -176,7 +176,7 @@ export default function AdminDepositsPage() {
 
           <div className="p-5 rounded-2xl bg-[#121722] border border-emerald-500/40">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Total Approved Funds</span>
-            <div className="text-2xl font-black text-emerald-400 mt-1">NPR {approvedSum.toLocaleString()}</div>
+            <div className="text-2xl font-black text-emerald-400 mt-1">🪙 {approvedSum.toLocaleString()} COINS</div>
             <span className="text-[11px] text-gray-400 mt-1 block">{approvedCount} approved deposits</span>
           </div>
 
@@ -276,7 +276,7 @@ export default function AdminDepositsPage() {
 
                       {/* Amount */}
                       <td className="p-4 font-black text-base text-emerald-400">
-                        NPR {req.amount.toLocaleString()}
+                        🪙 {req.amount.toLocaleString()} COIN
                       </td>
 
                       {/* Gateway & TxID */}
@@ -402,7 +402,7 @@ export default function AdminDepositsPage() {
               <div className="text-xs text-gray-300 space-y-1">
                 <div>Req ID: <span className="font-mono text-white font-bold">{selectedReq.requestId}</span></div>
                 <div>User: <span className="text-[#FF9F1C] font-bold">@{selectedReq.user?.username}</span></div>
-                <div>Amount: <span className="text-white font-bold">NPR {selectedReq.amount}</span></div>
+                <div>Amount: <span className="text-white font-bold">🪙 {selectedReq.amount} COIN</span></div>
               </div>
 
               <form onSubmit={handleRejectSubmit} className="space-y-4 pt-2">

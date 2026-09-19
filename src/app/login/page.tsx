@@ -2,10 +2,11 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Flame, Lock, Mail, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
@@ -82,8 +83,15 @@ function LoginForm() {
     <div className="w-full max-w-md bg-[#121722] border border-[#262F45] rounded-3xl p-8 shadow-2xl space-y-6">
       
       <div className="text-center space-y-2">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#FF2E4C] to-[#FF9F1C] flex items-center justify-center mx-auto shadow-lg shadow-[#FF2E4C]/25">
-          <Flame className="w-7 h-7 text-white" />
+        <div className="flex justify-center pb-1">
+          <Image
+            src="/images/logo.png"
+            alt="KARMA SCRIMS"
+            width={200}
+            height={117}
+            className="h-14 sm:h-16 w-auto object-contain drop-shadow-[0_2px_12px_rgba(255,46,76,0.4)]"
+            priority
+          />
         </div>
         <h1 className="text-2xl font-black uppercase tracking-wider text-white">Welcome Back</h1>
         <p className="text-xs text-gray-400">Login to access your tournaments and room codes</p>

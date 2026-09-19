@@ -235,16 +235,6 @@ export default function NotificationsPage() {
               </button>
             )}
 
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#121722] border border-[#262F45] text-[#FF9F1C] text-xs font-bold hover:border-[#FF9F1C] transition-all"
-              >
-                <CheckCheck className="w-4 h-4" />
-                <span>Mark All Read</span>
-              </button>
-            )}
-
             {notifications.length > 0 && (
               <button
                 onClick={handleClearAll}

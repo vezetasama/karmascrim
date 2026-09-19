@@ -14,7 +14,9 @@ import {
   Loader2,
   AlertCircle,
   Clock,
-  Sparkles,
+  Coins,
+  ImagePlus,
+  Download,
 } from 'lucide-react';
 
 export default function AddMoneyPage() {
@@ -77,7 +79,7 @@ export default function AddMoneyPage() {
             <div className="space-y-2">
               <h2 className="text-2xl font-black uppercase text-white tracking-wide">Login Required</h2>
               <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-                Please log in or create an account to add money to your Karma Scrims wallet.
+                Please log in or create an account to add coins to your Karma Scrims wallet.
               </p>
             </div>
 
@@ -119,7 +121,7 @@ export default function AddMoneyPage() {
       const uploadFormData = new FormData();
       uploadFormData.append('file', file);
 
-      const res = await fetch('/api/admin/banners/upload', {
+      const res = await fetch('/api/wallet/upload', {
         method: 'POST',
         body: uploadFormData,
       });
@@ -144,11 +146,11 @@ export default function AddMoneyPage() {
     }
     if (selectedMethod) {
       if (num < selectedMethod.minAmount) {
-        setError(`Minimum deposit amount for ${selectedMethod.name} is NPR ${selectedMethod.minAmount}.`);
+        setError(`Minimum deposit amount for ${selectedMethod.name} is ${selectedMethod.minAmount} COINS (Rs. ${selectedMethod.minAmount}).`);
         return;
       }
       if (num > selectedMethod.maxAmount) {
-        setError(`Maximum deposit amount for ${selectedMethod.name} is NPR ${selectedMethod.maxAmount}.`);
+        setError(`Maximum deposit amount for ${selectedMethod.name} is ${selectedMethod.maxAmount} COINS (Rs. ${selectedMethod.maxAmount}).`);
         return;
       }
     }
@@ -156,11 +158,38 @@ export default function AddMoneyPage() {
     setCurrentStep(2);
   };
 
+  // Download QR Code to Gallery
+  const handleDownloadQR = async () => {
+    const qrUrl =
+      selectedMethod?.qrImageUrl && !selectedMethod.qrImageUrl.includes('unsplash')
+        ? selectedMethod.qrImageUrl
+        : '/images/fonepay-qr.png';
+
+    try {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = 'Mandip_Regmi_Fonepay_QR.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      const link = document.createElement('a');
+      link.href = qrUrl;
+      link.download = 'Mandip_Regmi_Fonepay_QR.png';
+      link.target = '_blank';
+      link.click();
+    }
+  };
+
   // Final Submission from Step 2 directly to Success Confirmation (Step 3)
   const handleSubmitDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transactionId.trim()) {
-      setError('Please enter your Fonepay Transaction ID / Reference Number.');
+    if (!screenshotUrl) {
+      setError('Please select and upload your payment screenshot image before submitting.');
       return;
     }
 
@@ -216,15 +245,12 @@ export default function AddMoneyPage() {
 
         {/* Page Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-[#FF2E4C]/20 to-[#FF9F1C]/20 border border-[#FF2E4C]/40 text-[#FF9F1C] text-xs font-black uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF2E4C]" />
-            <span>Instant Fonepay Wallet Top-Up</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-wide text-white">
-            Add Money to Wallet
+          <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-wide text-white flex items-center justify-center gap-2">
+            <span>Add Money to Wallet</span>
+            <Coins className="w-7 h-7 sm:w-9 sm:h-9 text-[#FF9F1C]" />
           </h1>
           <p className="text-xs sm:text-sm text-gray-400 max-w-lg mx-auto">
-            Scan Fonepay QR or transfer to official account. Submit reference number for instant verification.
+            Scan QR and submit for instant verification.
           </p>
         </div>
 
@@ -239,18 +265,24 @@ export default function AddMoneyPage() {
         {/* STEP 1: SELECT AMOUNT */}
         {currentStep === 1 && (
           <div className="p-6 sm:p-8 rounded-3xl bg-[#121722] border border-[#262F45] space-y-6 shadow-2xl">
-            <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-bold text-white uppercase flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-[#FF2E4C]" />
                 Select Amount
               </h2>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FF9F1C]/20 border border-[#FF9F1C]/40 text-[#FF9F1C] text-[11px] font-black uppercase">
+                1 RS = 1 COIN
+              </span>
             </div>
 
             {/* Custom Amount Input */}
             <div className="space-y-2 pt-2">
+              <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
+                Enter Amount to Deposit
+              </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-[#FF9F1C]">
-                  NPR
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-[#FF9F1C] flex items-center gap-1">
+                  🪙 COIN
                 </span>
                 <input
                   type="number"
@@ -261,13 +293,15 @@ export default function AddMoneyPage() {
                     setAmount(e.target.value);
                     setError('');
                   }}
-                  className="w-full pl-14 pr-4 py-3.5 rounded-2xl bg-[#0B0E14] border border-[#262F45] text-lg font-black text-white focus:outline-none focus:border-[#FF2E4C]"
-                  placeholder="Enter amount"
+                  className="w-full pl-28 pr-4 py-3.5 rounded-2xl bg-[#0B0E14] border border-[#262F45] text-lg font-black text-white focus:outline-none focus:border-[#FF2E4C]"
+                  placeholder="e.g. 100"
                 />
               </div>
-              <p className="text-[11px] text-gray-500">
-                Minimum: NPR {selectedMethod?.minAmount || 10} | Maximum: NPR {selectedMethod?.maxAmount || 25000}
-              </p>
+              <div className="flex justify-between items-center text-[11px] text-gray-400 pt-1">
+                <span>
+                  Minimum: <strong>10 COIN</strong>
+                </span>
+              </div>
             </div>
 
             {/* Payment Method Selector */}
@@ -299,133 +333,120 @@ export default function AddMoneyPage() {
               onClick={handleStep1Next}
               className="w-full py-4 rounded-2xl bg-[#FF2E4C] text-white text-xs font-black uppercase tracking-wider hover:bg-[#D61F3B] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FF2E4C]/30"
             >
-              <span>Continue to Fonepay Payment</span>
+              <span>CONTINUE</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* STEP 2: FONEPAY QR CODE & PAYMENT SUBMISSION FORM (COMBINED) */}
+        {/* STEP 2: PAYMENT QR CODE & PAYMENT SUBMISSION FORM (MATCHING IMAGE 2 DESIGN) */}
         {currentStep === 2 && (
-          <form onSubmit={handleSubmitDeposit} className="p-6 sm:p-8 rounded-3xl bg-[#121722] border border-[#262F45] space-y-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#262F45] pb-4">
-              <div>
-                <h2 className="text-lg font-bold text-white uppercase flex items-center gap-2">
-                  <QrCode className="w-5 h-5 text-[#FF9F1C]" />
-                  Pay NPR {Number(amount).toLocaleString()} via Fonepay
-                </h2>
-                <p className="text-xs text-gray-400">Scan QR code or use account details below, then enter your transaction ID.</p>
-              </div>
-              <span className="px-3 py-1 rounded-xl bg-[#FF9F1C]/20 border border-[#FF9F1C]/40 text-[#FF9F1C] font-black text-sm">
-                NPR {Number(amount).toLocaleString()}
-              </span>
+          <form onSubmit={handleSubmitDeposit} className="p-6 sm:p-8 rounded-[28px] bg-[#121722] border border-[#262F45] space-y-6 shadow-2xl max-w-md mx-auto">
+            
+            {/* Payment Method Logo & Title Header */}
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-white uppercase tracking-wider">
+                {!selectedMethod || selectedMethod.name.includes('Fonepay') ? 'eSewa' : selectedMethod.name}
+              </h3>
+              <h2 className="text-base sm:text-lg font-black uppercase text-white tracking-wide">
+                PLEASE FOLLOW THE INSTRUCTION
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed max-w-xs mx-auto">
+                You have requested to deposit <strong className="text-white font-black">Rs. {Number(amount).toLocaleString()}</strong>. Please pay exact amount for successful payment.
+              </p>
             </div>
 
-            {/* QR Code Container */}
-            <div className="p-4 rounded-2xl bg-[#0B0E14] border border-[#262F45] text-center space-y-3 max-w-sm mx-auto">
-              <div className="w-48 h-48 mx-auto rounded-xl overflow-hidden bg-white p-2 border border-gray-700 shadow-xl">
-                {selectedMethod?.qrImageUrl ? (
-                  <img
-                    src={selectedMethod.qrImageUrl}
-                    alt="Fonepay QR Code"
-                    className="w-full h-full object-contain"
-                  />
+            {/* QR Code Box & Save QR Option */}
+            <div className="flex flex-col items-center justify-center pt-2 gap-3">
+              <div className="w-56 h-56 rounded-3xl overflow-hidden bg-white p-3 border border-gray-700 shadow-2xl flex items-center justify-center">
+                <img
+                  src={
+                    selectedMethod?.qrImageUrl && !selectedMethod.qrImageUrl.includes('unsplash')
+                      ? selectedMethod.qrImageUrl
+                      : '/images/fonepay-qr.png'
+                  }
+                  alt="Payment QR Code"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Name & Save QR Button */}
+              <div className="flex items-center justify-between w-full max-w-[260px] gap-2 px-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[11px] text-gray-400 font-medium whitespace-nowrap">Name</span>
+                  <span className="text-xs font-bold text-white whitespace-nowrap">Mandip Regmi</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadQR}
+                  className="px-3 py-1.5 rounded-lg bg-[#0B0E14] border border-[#262F45] hover:border-[#FF2E4C] text-[11px] font-bold text-gray-200 hover:text-white flex items-center gap-1.5 transition-all shadow shrink-0"
+                  title="Save QR image directly to gallery"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#FF2E4C]" />
+                  <span>Save QR</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Select Payment Screenshot Image Button */}
+            <div className="space-y-2 pt-2">
+              <label className="flex items-center justify-center gap-2.5 w-full py-3.5 px-4 rounded-xl bg-[#0B0E14] border border-[#262F45] hover:border-[#FF2E4C] cursor-pointer text-xs font-bold text-gray-200 hover:text-white transition-all group shadow-inner">
+                {uploading ? (
+                  <Loader2 className="w-4 h-4 text-[#FF2E4C] animate-spin" />
+                ) : screenshotUrl ? (
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
-                    QR Code Placeholder
-                  </div>
+                  <ImagePlus className="w-4 h-4 text-[#FF2E4C] group-hover:scale-110 transition-transform" />
                 )}
-              </div>
-              <span className="text-[11px] text-gray-400 font-bold block">
-                Scan with eSewa / Khalti / Any Mobile Banking
-              </span>
-            </div>
-
-            {/* Fonepay Transaction ID Input */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                Fonepay Transaction ID / Reference No. (Required)
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. FP-9823019482 or 1092837492"
-                value={transactionId}
-                onChange={(e) => {
-                  setTransactionId(e.target.value);
-                  setError('');
-                }}
-                className="w-full p-3.5 rounded-2xl bg-[#0B0E14] border border-[#262F45] text-sm font-mono font-bold text-white placeholder-gray-600 focus:outline-none focus:border-[#FF2E4C]"
-              />
-              <p className="text-[11px] text-gray-500">Found in your banking app receipt after successful transfer.</p>
-            </div>
-
-            {/* Optional Screenshot Upload */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                Payment Screenshot (Optional but recommended)
+                <span>
+                  {uploading
+                    ? 'Uploading Screenshot...'
+                    : screenshotUrl
+                    ? 'Payment Screenshot Image Attached'
+                    : 'Select Payment Screenshot Image'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </label>
 
-              {screenshotUrl ? (
-                <div className="relative w-full h-40 rounded-2xl overflow-hidden bg-black border border-[#262F45] group">
-                  <img src={screenshotUrl} alt="Payment Screenshot" className="w-full h-full object-cover" />
+              {/* Preview image thumbnail when uploaded */}
+              {screenshotUrl && (
+                <div className="relative w-full h-32 rounded-xl overflow-hidden bg-black border border-[#262F45] flex items-center justify-center group">
+                  <img src={screenshotUrl} alt="Payment Proof" className="h-full w-auto object-contain" />
                   <button
                     type="button"
                     onClick={() => setScreenshotUrl('')}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-600 text-white text-xs font-bold"
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-600/90 hover:bg-red-600 text-white text-[10px] font-bold uppercase transition-all shadow"
                   >
                     Remove
                   </button>
                 </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center p-6 rounded-2xl bg-[#0B0E14] border border-dashed border-[#262F45] hover:border-[#FF2E4C] cursor-pointer text-xs font-bold text-gray-400 transition-colors">
-                  {uploading ? (
-                    <Loader2 className="w-6 h-6 text-[#FF2E4C] animate-spin mb-2" />
-                  ) : (
-                    <Upload className="w-6 h-6 text-[#FF2E4C] mb-2" />
-                  )}
-                  <span>{uploading ? 'Uploading Screenshot...' : 'Click to Upload Payment Screenshot'}</span>
-                  <span className="text-[10px] text-gray-500 font-normal mt-1">PNG, JPG, WEBP max 5MB</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </label>
               )}
             </div>
 
-            {/* Optional Note */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                Optional Note / Remarks
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Paid via eSewa Fonepay QR"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="w-full p-3 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#FF2E4C]"
-              />
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-[#262F45]">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(1)}
-                className="px-5 py-3 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs font-bold text-gray-400 hover:text-white"
-              >
-                ← Back
-              </button>
-
+            {/* Submit Button */}
+            <div className="space-y-4 pt-2">
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-7 py-3 rounded-xl bg-[#FF2E4C] text-white text-xs font-black uppercase tracking-wider hover:bg-[#D61F3B] disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-[#FF2E4C]/30"
+                className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#FF2E4C] via-[#FF5069] to-[#FF9F1C] hover:opacity-95 disabled:opacity-50 text-white text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FF2E4C]/25"
               >
                 {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>Submit Deposit Request</span>
+                <span>Submit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="w-fit py-2 px-3 rounded-xl bg-[#0B0E14] border border-[#262F45] hover:border-[#FF2E4C] text-xs font-bold text-gray-200 hover:text-white transition-all flex items-center gap-1.5 shadow"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#FF2E4C]" />
+                <span>Back</span>
               </button>
             </div>
           </form>
@@ -441,7 +462,7 @@ export default function AddMoneyPage() {
             <div className="space-y-2">
               <h2 className="text-2xl font-black uppercase text-white">Deposit Request Submitted!</h2>
               <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto">
-                Your deposit request has been submitted successfully. Your balance will be updated after admin verification.
+                Your deposit request has been submitted successfully. Your wallet coins will be updated after admin verification.
               </p>
             </div>
 
@@ -452,8 +473,11 @@ export default function AddMoneyPage() {
                 <span className="font-mono font-black text-[#FF9F1C] text-sm">{createdDeposit.requestId}</span>
               </div>
               <div className="flex justify-between items-center pt-1">
-                <span className="text-gray-400">Amount:</span>
-                <span className="font-black text-white text-base">NPR {createdDeposit.amount.toLocaleString()}</span>
+                <span className="text-gray-400">Deposit Amount:</span>
+                <span className="font-black text-white text-base flex items-center gap-1">
+                  🪙 {createdDeposit.amount.toLocaleString()} COINS
+                  <span className="text-xs text-gray-400 font-normal">(Rs. {createdDeposit.amount.toLocaleString()})</span>
+                </span>
               </div>
               <div className="flex justify-between items-center font-mono text-[11px] text-gray-400">
                 <span>Transaction ID:</span>
@@ -490,3 +514,4 @@ export default function AddMoneyPage() {
     </div>
   );
 }
+

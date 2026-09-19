@@ -106,6 +106,32 @@ export default function UserWalletPage() {
     );
   }
 
+  const getTxBadgeLabel = (tx: any) => {
+    if (tx.type === 'MANUAL_ADJUSTMENT') {
+      let reason = '';
+      if (tx.description) {
+        const match = tx.description.match(/Admin Adjustment (?:\([^)]+\))?:\s*(.*?)\s*\(By:/i);
+        if (match && match[1]) {
+          reason = match[1].trim();
+        } else {
+          const parts = tx.description.split(':');
+          if (parts.length > 1) {
+            reason = parts[1].replace(/\(By:.*$/, '').trim();
+          }
+        }
+      }
+      const actionPrefix = tx.amount > 0 ? 'COIN ADDED' : 'COIN REDUCED';
+      return reason ? `${actionPrefix}: ${reason}` : actionPrefix;
+    }
+    if (tx.type === 'DEPOSIT') return 'DEPOSIT';
+    if (tx.type === 'WITHDRAWAL') return 'WITHDRAWAL';
+    if (tx.type === 'PRIZE') return 'PRIZE';
+    if (tx.type === 'ENTRY_FEE') return 'ENTRY FEE';
+    if (tx.type === 'REFUND') return 'REFUND';
+
+    return (tx.type || '').replace(/_/g, ' ');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0B0E14] text-white">
       <Navbar />
@@ -113,29 +139,26 @@ export default function UserWalletPage() {
       <main className="flex-1 py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-8">
         
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF2E4C]/10 border border-[#FF2E4C]/30 text-[#FF2E4C] text-[10px] font-black uppercase tracking-wider mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Karma Scrims Wallet</span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-wide flex items-center gap-2">
+                  <Wallet className="w-7 h-7 text-[#FF9F1C]" />
+                  MY WALLET
+                </h1>
+                <button
+                  onClick={fetchWalletData}
+                  className="p-2 rounded-xl bg-[#121722] border border-[#262F45] text-gray-400 hover:text-white transition-colors"
+                  title="Refresh Balance"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Manage your balance, add funds and withdraw tournament winnings.
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-wide flex items-center gap-2">
-              <Wallet className="w-7 h-7 text-[#FF9F1C]" />
-              My Esports Wallet
-            </h1>
-            <p className="text-xs text-gray-400 mt-1">
-              Manage your balance, add funds via Fonepay, and withdraw tournament winnings.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={fetchWalletData}
-              className="p-2.5 rounded-xl bg-[#121722] border border-[#262F45] text-gray-400 hover:text-white transition-colors"
-              title="Refresh Balance"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
           </div>
         </div>
 
@@ -149,31 +172,17 @@ export default function UserWalletPage() {
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             
             <div className="space-y-3">
-              <span className="text-xs font-extrabold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                Available Wallet Balance
-              </span>
-
               <div className="text-3xl sm:text-5xl font-black text-white tracking-tight flex items-baseline gap-2">
-                <span className="text-[#FF9F1C]">NPR</span>
+                <span>🪙</span>
                 <span>{balance.toLocaleString()}</span>
+                <span className="text-lg sm:text-2xl font-bold text-[#FF9F1C]">COIN</span>
               </div>
 
-              {/* Sub-balance Breakdown */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <div className="px-3 py-1.5 rounded-xl bg-[#0B0E14]/80 border border-[#262F45] text-xs">
-                  <span className="text-gray-400">Deposited Funds: </span>
-                  <span className="font-extrabold text-gray-200">NPR {depositBalance.toLocaleString()}</span>
-                </div>
-                <div className="px-3 py-1.5 rounded-xl bg-[#FF9F1C]/10 border border-[#FF9F1C]/30 text-xs">
-                  <span className="text-amber-400/90 font-bold">Withdrawable Earnings: </span>
-                  <span className="font-extrabold text-[#FF9F1C]">NPR {winningsBalance.toLocaleString()}</span>
-                </div>
+              <div className="flex items-center gap-2 pt-1">
+                <p className="text-xs text-gray-400">
+                  Both deposited funds & tournament prize winnings are stored as Coins.
+                </p>
               </div>
-
-              <p className="text-xs text-gray-400 max-w-md pt-1">
-                Both deposited funds & tournament prize winnings can be used to join scrims. Only tournament winnings can be withdrawn.
-              </p>
             </div>
 
             {/* Quick Actions Grid: ADD FUNDS and WITHDRAW */}
@@ -242,7 +251,7 @@ export default function UserWalletPage() {
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-gray-400 block uppercase font-bold">Amount</span>
-                      <span className="text-sm font-black text-white">NPR {req.amount.toLocaleString()}</span>
+                      <span className="text-sm font-black text-white">🪙 {req.amount.toLocaleString()} COIN</span>
                     </div>
                   </div>
 
@@ -285,8 +294,21 @@ export default function UserWalletPage() {
                   key={req.id}
                   className="p-4 rounded-2xl bg-[#121722] border border-[#262F45] space-y-3 relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-white">{req.requestId}</span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="font-mono text-xs font-bold text-white">{req.requestId}</span>
+                      <div className="mt-1 text-[10px] text-gray-500">
+                        {new Date(req.createdAt).toLocaleDateString('en-US', {
+                          month: 'numeric',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}{' '}
+                        {new Date(req.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                    </div>
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border flex items-center gap-1 ${
                         req.status === 'APPROVED'
@@ -303,19 +325,9 @@ export default function UserWalletPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-baseline justify-between border-t border-[#262F45] pt-2">
-                    <div>
-                      <span className="text-[10px] text-gray-400 block uppercase font-bold">Gateway</span>
-                      <span className="text-xs font-bold text-[#FF9F1C]">{req.paymentMethod?.name || 'Fonepay'}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] text-gray-400 block uppercase font-bold">Amount</span>
-                      <span className="text-sm font-black text-white">NPR {req.amount.toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  <div className="text-[11px] text-gray-400 font-mono bg-[#0B0E14] p-2 rounded-xl border border-[#262F45] truncate">
-                    Tx ID: <span className="text-gray-200">{req.transactionId}</span>
+                  <div className="flex items-center justify-between border-t border-[#262F45] pt-2">
+                    <span className="text-[10px] uppercase font-bold text-[#FF9F1C]">BALANCE ADDED</span>
+                    <span className="text-sm font-black text-white">🪙 {req.amount.toLocaleString()} COIN</span>
                   </div>
 
                   {req.rejectionReason && (
@@ -324,10 +336,6 @@ export default function UserWalletPage() {
                       <span>{req.rejectionReason}</span>
                     </div>
                   )}
-
-                  <div className="text-[10px] text-gray-500 text-right">
-                    {new Date(req.createdAt).toLocaleString()}
-                  </div>
                 </div>
               ))}
             </div>
@@ -335,7 +343,7 @@ export default function UserWalletPage() {
         )}
 
         {/* TRANSACTIONS HISTORY TABLE */}
-        <div className="p-6 rounded-3xl bg-[#121722] border border-[#262F45] space-y-4 shadow-xl">
+        <div className="p-4 sm:p-6 rounded-3xl bg-[#121722] border border-[#262F45] space-y-4 shadow-xl w-full">
           <div className="flex items-center justify-between border-b border-[#262F45] pb-4">
             <h3 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
               <Trophy className="w-4.5 h-4.5 text-[#FF2E4C]" />
@@ -349,49 +357,49 @@ export default function UserWalletPage() {
               No transactions recorded yet.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[#262F45] text-gray-400 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="pb-3 px-3">Date</th>
-                    <th className="pb-3 px-3">Type</th>
-                    <th className="pb-3 px-3">Description</th>
-                    <th className="pb-3 px-3 text-right">Amount</th>
-                    <th className="pb-3 px-3 text-right">Balance After</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#262F45]/50 font-medium">
-                  {transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-[#1A2234]/50 transition-colors">
-                      <td className="py-3 px-3 text-gray-400 whitespace-nowrap">
+            <div className="max-h-[235px] sm:max-h-[265px] overflow-y-auto space-y-2.5 pr-1 w-full">
+              {transactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="p-3 sm:p-3.5 rounded-2xl bg-[#0B0E14]/70 border border-[#262F45]/70 hover:border-[#FF2E4C]/40 transition-all flex items-center justify-between gap-3 w-full"
+                >
+                  {/* Left: Type badge + Description & Date */}
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase shrink-0 max-w-[160px] xs:max-w-[220px] sm:max-w-[340px] truncate ${
+                        tx.amount > 0
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}
+                      title={getTxBadgeLabel(tx)}
+                    >
+                      {getTxBadgeLabel(tx)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-white truncate leading-tight">
+                        {tx.description}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
                         {new Date(tx.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-3">
-                        <span
-                          className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold uppercase ${
-                            tx.amount > 0
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                          }`}
-                        >
-                          {tx.type}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-gray-200">{tx.description}</td>
-                      <td
-                        className={`py-3 px-3 text-right font-bold whitespace-nowrap ${
-                          tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'
-                        }`}
-                      >
-                        {tx.amount > 0 ? '+' : ''}NPR {Math.abs(tx.amount).toLocaleString()}
-                      </td>
-                      <td className="py-3 px-3 text-right text-gray-300 font-mono whitespace-nowrap">
-                        NPR {tx.balanceAfter.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: Amount & Balance After in single line */}
+                  <div className="text-right shrink-0">
+                    <span
+                      className={`text-xs font-bold block ${
+                        tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'
+                      }`}
+                    >
+                      {tx.amount > 0 ? '+' : ''}🪙 {Math.abs(tx.amount).toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-gray-400 block font-mono">
+                      🪙 {tx.balanceAfter.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

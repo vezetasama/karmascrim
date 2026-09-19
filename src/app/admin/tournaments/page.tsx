@@ -22,6 +22,24 @@ import {
 
 const PREDEFINED_MAPS = ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'Nexterra'];
 
+const getDefaultTotalSlots = (category: string, type: string) => {
+  if (category === 'FULL_MAP' && type === 'SQUAD') return 12;
+  return 48;
+};
+
+const getDefaultRules = (category: string, type: string) => {
+  if (category === 'FULL_MAP' && type === 'SQUAD') {
+    return [
+      '1. ONLY SQUAD ENTRY.',
+      '2. JOIN WITH YOUR GIVEN ID.',
+      '3. NO PC PLAYER.',
+      '4. HACKERS WILL BE BAN FROM THE WEBSITE.',
+      '5. NO BAD WORDS FOR OTHER SQUAD AND ROOM MAKER.'
+    ].join('\n');
+  }
+  return '';
+};
+
 const parseMaps = (mapsField: any): string[] => {
   if (!mapsField) return [];
   if (Array.isArray(mapsField)) return mapsField;
@@ -49,17 +67,30 @@ export default function AdminTournamentsPage() {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('FULL_MAP');
   const [format, setFormat] = useState('Squad');
+  const [type, setType] = useState('SQUAD'); // SQUAD or SOLO
   const [description, setDescription] = useState('');
   const [rules, setRules] = useState('');
   const [whatsappLink, setWhatsappLink] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('07:00 PM');
-  const [registrationDeadline, setRegistrationDeadline] = useState('06:30 PM');
-  const [entryFee, setEntryFee] = useState(100);
-  const [prizePool, setPrizePool] = useState(2000);
-  const [totalSlots, setTotalSlots] = useState(48);
+  const [entryFee, setEntryFee] = useState<number | ''>(100);
+  const [prizePool, setPrizePool] = useState<number | ''>(2000);
+  const [totalSlots, setTotalSlots] = useState<number | ''>(() => getDefaultTotalSlots('FULL_MAP', 'SQUAD'));
   const [bannerUrl, setBannerUrl] = useState('');
   const [status, setStatus] = useState('REGISTRATION_OPEN');
+
+  // Solo Scoring Configuration State
+  const [soloScoringType, setSoloScoringType] = useState('PER_KILL');
+  const [soloKillReward, setSoloKillReward] = useState<number | ''>(10);
+  const [soloPlacementRewards, setSoloPlacementRewards] = useState(
+    JSON.stringify({ "1": 500, "2": 300, "3": 200 }, null, 2)
+  );
+
+  // Squad Scoring Configuration State
+  const [squadKillPoints, setSquadKillPoints] = useState<number | ''>(1);
+  const [squadPointTable, setSquadPointTable] = useState(
+    JSON.stringify({ "1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1 }, null, 2)
+  );
 
   // Maps Management State
   const [selectedMaps, setSelectedMaps] = useState<string[]>(['Bermuda', 'Purgatory', 'Kalahari']);
@@ -77,6 +108,13 @@ export default function AdminTournamentsPage() {
   useEffect(() => {
     fetchTournaments();
   }, []);
+
+  useEffect(() => {
+    if (!selectedTournament) {
+      setTotalSlots(getDefaultTotalSlots(category, type));
+      setRules(getDefaultRules(category, type));
+    }
+  }, [category, type, selectedTournament]);
 
   const fetchTournaments = async () => {
     try {
@@ -113,19 +151,24 @@ export default function AdminTournamentsPage() {
     setName('');
     setCategory('FULL_MAP');
     setFormat('Squad');
+    setType('SQUAD');
     setDescription('');
-    setRules('');
+    setRules(getDefaultRules('FULL_MAP', 'SQUAD'));
     setWhatsappLink('');
     setDate(new Date().toISOString().split('T')[0]);
     setStartTime('07:00 PM');
-    setRegistrationDeadline('06:30 PM');
     setEntryFee(100);
     setPrizePool(2000);
-    setTotalSlots(48);
+    setTotalSlots(getDefaultTotalSlots('FULL_MAP', 'SQUAD'));
     setBannerUrl('');
     setStatus('REGISTRATION_OPEN');
     setSelectedMaps(['Bermuda', 'Purgatory', 'Kalahari']);
     setCustomMapInput('');
+    setSoloScoringType('PER_KILL');
+    setSoloKillReward(10);
+    setSoloPlacementRewards(JSON.stringify({ "1": 500, "2": 300, "3": 200 }, null, 2));
+    setSquadKillPoints(1);
+    setSquadPointTable(JSON.stringify({ "1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1 }, null, 2));
     setError(null);
   };
 
@@ -134,12 +177,12 @@ export default function AdminTournamentsPage() {
     setName(t.name);
     setCategory(t.category);
     setFormat(t.format);
+    setType(t.type || 'SQUAD');
     setDescription(t.description || '');
     setRules(t.rules || '');
     setWhatsappLink(t.whatsappLink || '');
     setDate(t.date);
     setStartTime(t.startTime);
-    setRegistrationDeadline(t.registrationDeadline);
     setEntryFee(t.entryFee);
     setPrizePool(t.prizePool);
     setTotalSlots(t.totalSlots);
@@ -147,6 +190,23 @@ export default function AdminTournamentsPage() {
     setStatus(t.status);
     setSelectedMaps(parseMaps(t.maps));
     setCustomMapInput('');
+
+    // Scoring configurations
+    setSoloScoringType(t.soloScoringType || 'PER_KILL');
+    setSoloKillReward(t.soloKillReward || 10);
+    setSoloPlacementRewards(
+      t.soloPlacementRewards 
+        ? (typeof t.soloPlacementRewards === 'string' ? t.soloPlacementRewards : JSON.stringify(t.soloPlacementRewards, null, 2))
+        : JSON.stringify({ "1": 500, "2": 300, "3": 200 }, null, 2)
+    );
+
+    setSquadKillPoints(t.squadKillPoints !== null && t.squadKillPoints !== undefined ? t.squadKillPoints : 1);
+    setSquadPointTable(
+      t.squadPointTable
+        ? (typeof t.squadPointTable === 'string' ? t.squadPointTable : JSON.stringify(t.squadPointTable, null, 2))
+        : JSON.stringify({ "1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1 }, null, 2)
+    );
+
     setModalOpen(true);
   };
 
@@ -168,22 +228,61 @@ export default function AdminTournamentsPage() {
     setActionLoading(true);
     setError(null);
 
+    let parsedSoloPlacement = null;
+    let parsedSquadTable = null;
+
+    if (type === 'SOLO') {
+      try {
+        parsedSoloPlacement = JSON.parse(soloPlacementRewards);
+      } catch (err) {
+        setError('Invalid JSON format for Solo Placement Rewards. Example: { "1": 500, "2": 300 }');
+        setActionLoading(false);
+        return;
+      }
+    } else {
+      try {
+        parsedSquadTable = JSON.parse(squadPointTable);
+      } catch (err) {
+        setError('Invalid JSON format for Squad Point Table. Example: { "1": 12, "2": 9, "3": 8 }');
+        setActionLoading(false);
+        return;
+      }
+    }
+
+    const toNumber = (value: number | string | undefined, fallback = 0) => {
+      if (value === '' || value === undefined || value === null) return fallback;
+      return Number(value);
+    };
+
+    const calculatedEntryFee = toNumber(entryFee, 0);
+    let calculatedPrizePool = toNumber(prizePool, 0);
+    if (type === 'SOLO' && soloScoringType === 'SURVIVAL') {
+      calculatedPrizePool = calculatedEntryFee * 2;
+    }
+
     const body = {
       name,
       category,
       format,
+      type,
       description,
       rules,
       whatsappLink,
       date,
       startTime,
-      registrationDeadline,
-      entryFee,
-      prizePool,
-      totalSlots,
+      entryFee: calculatedEntryFee,
+      prizePool: calculatedPrizePool,
+      totalSlots: toNumber(totalSlots, 0),
       bannerUrl,
       status,
       maps: selectedMaps,
+      // Solo Scoring Fields
+      soloScoringType,
+      soloKillReward: toNumber(soloKillReward, 0),
+      soloPlacementRewards: parsedSoloPlacement,
+      // Squad Scoring Fields
+      squadKillPoints: toNumber(squadKillPoints, 0),
+      squadPointTable: parsedSquadTable,
     };
 
     try {
@@ -337,12 +436,14 @@ export default function AdminTournamentsPage() {
                     return (
                     <tr key={t.id} className="hover:bg-[#1A2234]">
                       <td className="p-3.5 font-bold text-white max-w-xs truncate">{t.name}</td>
-                      <td className="p-3.5">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          t.category === 'FULL_MAP' ? 'badge-full-map' : 'badge-clash-squad'
-                        }`}>
-                          {t.category} ({t.format})
-                        </span>
+                      <td className="p-3.5 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            t.type === 'SOLO' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-[#FF2E4C]/20 text-[#FF2E4C] border border-[#FF2E4C]/40'
+                          }`}>
+                            {t.type === 'SOLO' ? 'SOLO' : 'SQUAD'}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-3.5 max-w-[180px]">
                         {(() => {
@@ -366,8 +467,31 @@ export default function AdminTournamentsPage() {
                         <div className="text-[10px] text-[#FF9F1C] font-semibold">{t.startTime}</div>
                       </td>
                       <td className="p-3.5 font-mono">
-                        <div className="text-white font-bold">NPR {t.prizePool}</div>
-                        <div className="text-[10px] text-gray-400">Entry: NPR {t.entryFee}</div>
+                        <div className="text-white font-bold">
+                          🪙 {(() => {
+                            const isSolo = t.type === 'SOLO' || t.format === 'SOLO';
+                            if (isSolo) {
+                              if (t.soloScoringType === 'PER_KILL') {
+                                return `${t.soloKillReward || 0} / KILL`;
+                              }
+                              if (t.soloScoringType === 'SURVIVAL') {
+                                const doubleFee = (t.entryFee || 0) * 2;
+                                return `${doubleFee.toLocaleString()}`;
+                              }
+                              if (t.soloScoringType === 'KILL_AND_SURVIVAL') {
+                                const doubleFee = (t.entryFee || 0) * 2;
+                                return `${t.soloKillReward || 0}/KILL + 🪙 ${doubleFee.toLocaleString()}`;
+                              }
+                              if (t.soloKillReward && t.soloKillReward > 0) {
+                                return `${t.soloKillReward} / KILL`;
+                              }
+                              const doubleFee = (t.entryFee || 0) * 2;
+                              return doubleFee > 0 ? doubleFee.toLocaleString() : (t.prizePool ? t.prizePool.toLocaleString() : '0');
+                            }
+                            return t.prizePool ? t.prizePool.toLocaleString() : '0';
+                          })()}
+                        </div>
+                        <div className="text-[10px] text-gray-400">Entry: {t.entryFee === 0 ? 'FREE' : `🪙 ${t.entryFee}`}</div>
                       </td>
                       <td className="p-3.5 font-bold text-white">
                         {t.registeredSlots} / {t.totalSlots}
@@ -426,289 +550,389 @@ export default function AdminTournamentsPage() {
         {/* CREATE / EDIT TOURNAMENT MODAL */}
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-            <div className="bg-[#121722] border border-[#262F45] w-full max-w-2xl rounded-3xl p-6 shadow-2xl relative my-8">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-xl bg-[#0B0E14] text-gray-400 hover:text-white border border-[#262F45]"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="bg-[#121722] border border-[#262F45] w-full max-w-2xl rounded-3xl shadow-2xl relative my-8 max-h-[90vh] flex flex-col">
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[#121722] border-b border-[#262F45] px-6 py-4 rounded-t-3xl">
+                <h2 className="text-lg font-bold text-white uppercase tracking-wider">
+                  {selectedTournament ? 'Edit Tournament' : 'Create New Tournament'}
+                </h2>
 
-              <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-4">
-                {selectedTournament ? 'Edit Tournament' : 'Create New Tournament'}
-              </h2>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="p-2 rounded-xl bg-[#0B0E14] text-gray-400 hover:text-white border border-[#262F45]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              {error && (
-                <div className="mb-4 p-3 rounded-xl bg-red-950/40 border border-red-500/50 text-red-400 text-xs">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSaveTournament} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1">Tournament Name *</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Full Map — 7:00 PM Evening Grand Championship"
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Category *</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                    >
-                      <option value="FULL_MAP">Full Map</option>
-                      <option value="CLASH_SQUAD">Clash Squad</option>
-                    </select>
+              <div className="overflow-y-auto px-6 py-5">
+                {error && (
+                  <div className="mb-4 p-3 rounded-xl bg-red-950/40 border border-red-500/50 text-red-400 text-xs">
+                    {error}
                   </div>
+                )}
 
+                <form onSubmit={handleSaveTournament} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Format *</label>
+                    <label className="block text-xs font-bold text-gray-400 mb-1">Tournament Name *</label>
                     <input
                       type="text"
-                      value={format}
-                      onChange={(e) => setFormat(e.target.value)}
-                      placeholder="Squad, 1v1, 2v2, 4v4"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Full Map — 7:00 PM Evening Grand Championship"
                       className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                       required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Status *</label>
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                    >
-                      <option value="REGISTRATION_OPEN">Registration Open</option>
-                      <option value="REGISTRATION_CLOSED">Registration Closed</option>
-                      <option value="LIVE">Live Now</option>
-                      <option value="COMPLETED">Completed</option>
-                      <option value="CANCELLED">Cancelled</option>
-                      <option value="DRAFT">Draft</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Map Multi-Select Section */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-400">
-                    Free Fire Maps Included (Multi-select) *
-                  </label>
-                  <div className="p-3 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      {PREDEFINED_MAPS.map((m) => {
-                        const isSelected = selectedMaps.includes(m);
-                        return (
-                          <button
-                            type="button"
-                            key={m}
-                            onClick={() => toggleMap(m)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center gap-1.5 ${
-                              isSelected
-                                ? 'bg-[#FF2E4C]/20 text-[#FF2E4C] border-[#FF2E4C] shadow-sm'
-                                : 'bg-[#121722] text-gray-400 border-[#262F45] hover:text-white hover:border-gray-500'
-                            }`}
-                          >
-                            <span className="text-[10px]">{isSelected ? '✓' : '+'}</span>
-                            <span>{m}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Custom Map Input */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-[#262F45]/60">
-                      <input
-                        type="text"
-                        placeholder="Add another map (e.g. NeXT, Kalahari)..."
-                        value={customMapInput}
-                        onChange={(e) => setCustomMapInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddCustomMap();
-                          }
-                        }}
-                        className="flex-1 px-3 py-1.5 rounded-lg bg-[#121722] border border-[#262F45] text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#FF2E4C]"
-                      />
+                  {/* TOURNAMENT SCORING TYPE SELECTOR (SOLO vs SQUAD) */}
+                  <div className="p-4 rounded-2xl bg-[#0B0E14] border border-[#262F45] space-y-3">
+                    <label className="block text-xs font-black uppercase text-gray-300 tracking-wider">
+                      Scoring Architecture & Tournament Type *
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={handleAddCustomMap}
-                        className="px-3 py-1.5 rounded-lg bg-[#262F45] hover:bg-[#FF2E4C] text-white text-xs font-bold transition-colors"
+                        onClick={() => setType('SQUAD')}
+                        className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                          type === 'SQUAD'
+                            ? 'bg-[#FF2E4C]/20 border-[#FF2E4C] text-white shadow-lg'
+                            : 'bg-[#121722] border-[#262F45] text-gray-400 hover:text-white'
+                        }`}
                       >
-                        Add Map
+                        <Shield className="w-4 h-4 text-[#FF2E4C]" />
+                        <span>SQUAD (Point Table)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setType('SOLO')}
+                        className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                          type === 'SOLO'
+                            ? 'bg-amber-500/20 border-amber-500 text-white shadow-lg'
+                            : 'bg-[#121722] border-[#262F45] text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <Trophy className="w-4 h-4 text-[#FF9F1C]" />
+                        <span>SOLO (Cash Payouts)</span>
                       </button>
                     </div>
+                  </div>
 
-                    {/* Selected Maps List / Badge preview */}
-                    {selectedMaps.length > 0 ? (
-                      <div className="text-[11px] text-gray-300 font-semibold flex items-center gap-1.5 flex-wrap pt-1">
-                        <span className="text-gray-500">Active Maps ({selectedMaps.length}):</span>
-                        {selectedMaps.map((mapName) => (
-                          <span
-                            key={mapName}
-                            className="inline-flex items-center gap-1 bg-[#1A2234] border border-[#FF2E4C]/40 px-2 py-0.5 rounded-md text-white font-bold"
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Category *</label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                      >
+                        <option value="FULL_MAP">Full Map</option>
+                        <option value="CLASH_SQUAD">Clash Squad</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Format *</label>
+                      <input
+                        type="text"
+                        value={format}
+                        onChange={(e) => setFormat(e.target.value)}
+                        placeholder="Squad, 1v1, 2v2, 4v4"
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Status *</label>
+                      <select
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                      >
+                        <option value="REGISTRATION_OPEN">Registration Open</option>
+                        <option value="REGISTRATION_CLOSED">Registration Closed</option>
+                        <option value="LIVE">Live Now</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                        <option value="DRAFT">Draft</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* DYNAMIC SCORING CONFIGURATION (SOLO VS SQUAD) */}
+                  {type === 'SOLO' ? (
+                    <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/40 space-y-4">
+                      <div className="flex items-center justify-between pb-2 border-b border-amber-500/30">
+                        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Trophy className="w-4 h-4" />
+                          Solo Tournament Cash Scoring System
+                        </span>
+                        <span className="text-[10px] font-semibold text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                          Player-Level Cash Formula
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-300 mb-1">Solo Scoring Type *</label>
+                          <select
+                            value={soloScoringType}
+                            onChange={(e) => setSoloScoringType(e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white focus:outline-none focus:border-amber-500"
                           >
-                            🗺️ {mapName}
+                            <option value="PER_KILL">Per Kill Only (Kills × Reward)</option>
+                            <option value="SURVIVAL">Survival / Placement Only (Rank Reward)</option>
+                            <option value="KILL_AND_SURVIVAL">Kill + Survival (Kills Reward + Placement Reward)</option>
+                          </select>
+                        </div>
+
+                        {(soloScoringType === 'PER_KILL' || soloScoringType === 'KILL_AND_SURVIVAL') && (
+                          <div>
+                            <label className="block text-xs font-bold text-gray-300 mb-1">Per Kill Reward (COINS) *</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={soloKillReward}
+                              onChange={(e) => setSoloKillReward(e.target.value === '' ? '' : Number(e.target.value))}
+                              placeholder="e.g. 15"
+                              className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white font-mono"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {(soloScoringType === 'SURVIVAL' || soloScoringType === 'KILL_AND_SURVIVAL') && (
+                        <div>
+                          <label className="block text-xs font-bold text-gray-300 mb-1">
+                            Solo Placement Rewards Table (JSON: Rank → COINS Amount)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={soloPlacementRewards}
+                            onChange={(e) => setSoloPlacementRewards(e.target.value)}
+                            placeholder='{ "1": 500, "2": 300, "3": 150 }'
+                            className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white font-mono"
+                          />
+                          <span className="text-[10px] text-gray-400 mt-1 block">
+                            Format rank to coin reward, e.g. Rank 1 = 500 COINS, Rank 2 = 300 COINS.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {/* Map Multi-Select Section */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-gray-400">
+                      Free Fire Maps Included (Multi-select) *
+                    </label>
+                    <div className="p-3 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {PREDEFINED_MAPS.map((m) => {
+                          const isSelected = selectedMaps.includes(m);
+                          return (
                             <button
                               type="button"
-                              onClick={() => toggleMap(mapName)}
-                              className="text-gray-400 hover:text-red-400 ml-1 text-xs"
-                              title="Remove Map"
+                              key={m}
+                              onClick={() => toggleMap(m)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                                isSelected
+                                  ? 'bg-[#FF2E4C]/20 text-[#FF2E4C] border-[#FF2E4C] shadow-sm'
+                                  : 'bg-[#121722] text-gray-400 border-[#262F45] hover:text-white hover:border-gray-500'
+                              }`}
                             >
-                              ✕
+                              <span className="text-[10px]">{isSelected ? '✓' : '+'}</span>
+                              <span>{m}</span>
                             </button>
-                          </span>
-                        ))}
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <div className="text-[11px] text-amber-400 italic">
-                        ⚠️ No maps selected. Card will display fallback: "Map details coming soon".
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Date *</label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                      required
-                    />
+                      {/* Custom Map Input */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-[#262F45]/60">
+                        <input
+                          type="text"
+                          placeholder="Add another map (e.g. NeXT, Kalahari)..."
+                          value={customMapInput}
+                          onChange={(e) => setCustomMapInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddCustomMap();
+                            }
+                          }}
+                          className="flex-1 px-3 py-1.5 rounded-lg bg-[#121722] border border-[#262F45] text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#FF2E4C]"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddCustomMap}
+                          className="px-3 py-1.5 rounded-lg bg-[#262F45] hover:bg-[#FF2E4C] text-white text-xs font-bold transition-colors"
+                        >
+                          Add Map
+                        </button>
+                      </div>
+
+                      {/* Selected Maps List / Badge preview */}
+                      {selectedMaps.length > 0 ? (
+                        <div className="text-[11px] text-gray-300 font-semibold flex items-center gap-1.5 flex-wrap pt-1">
+                          <span className="text-gray-500">Active Maps ({selectedMaps.length}):</span>
+                          {selectedMaps.map((mapName) => (
+                            <span
+                              key={mapName}
+                              className="inline-flex items-center gap-1 bg-[#1A2234] border border-[#FF2E4C]/40 px-2 py-0.5 rounded-md text-white font-bold"
+                            >
+                              🗺️ {mapName}
+                              <button
+                                type="button"
+                                onClick={() => toggleMap(mapName)}
+                                className="text-gray-400 hover:text-red-400 ml-1 text-xs"
+                                title="Remove Map"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-amber-400 italic">
+                          ⚠️ No maps selected. Card will display fallback: "Map details coming soon".
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Date *</label>
+                      <input
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Start Time *</label>
+                      <input
+                        type="text"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        placeholder="07:00 PM"
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Entry Fee (COINS) *</label>
+                      <input
+                        type="number"
+                        value={entryFee}
+                        onChange={(e) => setEntryFee(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Prize Pool (COINS) *</label>
+                      <input
+                        type="number"
+                        value={type === 'SOLO' && soloScoringType === 'SURVIVAL' ? (entryFee === '' ? '' : Number(entryFee) * 2) : prizePool}
+                        onChange={(e) => setPrizePool(e.target.value === '' ? '' : Number(e.target.value))}
+                        readOnly={type === 'SOLO' && soloScoringType === 'SURVIVAL'}
+                        className={`w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border text-xs font-bold ${
+                          type === 'SOLO' && soloScoringType === 'SURVIVAL'
+                            ? 'border-amber-500/50 text-amber-300 cursor-not-allowed'
+                            : 'border-[#262F45] text-white'
+                        }`}
+                        required
+                      />
+                      {type === 'SOLO' && soloScoringType === 'SURVIVAL' && (
+                        <span className="text-[10px] text-amber-400 mt-1 block font-bold">
+                          ⚡ Auto 2× Entry Fee (🪙 {(Number(entryFee) || 0) * 2})
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Total Capacity Slots *</label>
+                      <input
+                        type="number"
+                        value={totalSlots}
+                        onChange={(e) => setTotalSlots(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Start Time *</label>
+                    <label className="block text-xs font-bold text-gray-400 mb-1">Banner Image URL (Optional)</label>
                     <input
                       type="text"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      placeholder="07:00 PM"
+                      value={bannerUrl}
+                      onChange={(e) => setBannerUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
                       className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                      required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Reg Deadline</label>
+                    <label className="block text-xs font-bold text-gray-400 mb-1">Description</label>
+                    <textarea
+                      rows={2}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 mb-1">WhatsApp Group Link (For Paid Players)</label>
                     <input
                       type="text"
-                      value={registrationDeadline}
-                      onChange={(e) => setRegistrationDeadline(e.target.value)}
-                      placeholder="06:30 PM"
+                      value={whatsappLink}
+                      onChange={(e) => setWhatsappLink(e.target.value)}
+                      placeholder="https://chat.whatsapp.com/..."
                       className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                     />
+                    <span className="text-[10px] text-gray-500 mt-1 block">
+                      Confirmed paid players will see a floating WhatsApp circle button on the tournament detail page to join this chat.
+                    </span>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Entry Fee (NPR) *</label>
-                    <input
-                      type="number"
-                      value={entryFee}
-                      onChange={(e) => setEntryFee(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                      required
+                    <label className="block text-xs font-bold text-gray-400 mb-1">Match Rules</label>
+                    <textarea
+                      rows={3}
+                      value={rules}
+                      onChange={(e) => setRules(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Prize Pool (NPR) *</label>
-                    <input
-                      type="number"
-                      value={prizePool}
-                      onChange={(e) => setPrizePool(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                      required
-                    />
+
+                  <div className="pt-4 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl bg-[#0B0E14] text-gray-400 hover:text-white border border-[#262F45] text-xs font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={actionLoading}
+                      className="px-6 py-2.5 rounded-xl glow-btn-red text-white text-xs font-bold uppercase tracking-wider"
+                    >
+                      {actionLoading ? 'Saving...' : 'Save Tournament'}
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">Total Capacity Slots *</label>
-                    <input
-                      type="number"
-                      value={totalSlots}
-                      onChange={(e) => setTotalSlots(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1">Banner Image URL (Optional)</label>
-                  <input
-                    type="text"
-                    value={bannerUrl}
-                    onChange={(e) => setBannerUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1">Description</label>
-                  <textarea
-                    rows={2}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1">WhatsApp Group Link (For Paid Players)</label>
-                  <input
-                    type="text"
-                    value={whatsappLink}
-                    onChange={(e) => setWhatsappLink(e.target.value)}
-                    placeholder="https://chat.whatsapp.com/..."
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                  />
-                  <span className="text-[10px] text-gray-500 mt-1 block">
-                    Confirmed paid players will see a floating WhatsApp circle button on the tournament detail page to join this chat.
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1">Match Rules</label>
-                  <textarea
-                    rows={3}
-                    value={rules}
-                    onChange={(e) => setRules(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
-                  />
-                </div>
-
-                <div className="pt-4 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="px-4 py-2.5 rounded-xl bg-[#0B0E14] text-gray-400 hover:text-white border border-[#262F45] text-xs font-semibold"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={actionLoading}
-                    className="px-6 py-2.5 rounded-xl glow-btn-red text-white text-xs font-bold uppercase tracking-wider"
-                  >
-                    {actionLoading ? 'Saving...' : 'Save Tournament'}
-                  </button>
-                </div>
-
-              </form>
+                </form>
+              </div>
             </div>
           </div>
         )}

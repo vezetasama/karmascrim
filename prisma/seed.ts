@@ -95,16 +95,18 @@ async function main() {
   // 4. Payment Method: Fonepay
   const fonepay = await prisma.paymentMethod.upsert({
     where: { id: 'fonepay-default-id' },
-    update: {},
+    update: {
+      name: 'eSewa',
+    },
     create: {
       id: 'fonepay-default-id',
-      name: 'Fonepay QR / Direct Merchant',
+      name: 'eSewa',
       type: 'FONEPAY',
       accountName: 'KARMA SCRIMS ESPORTS',
       accountNumber: '9841234567',
       merchantDetails: 'Fonepay Merchant Code: FONEPAY-KARMA-99',
       instructions: '1. Open Mobile Banking or eSewa/Khalti app.\n2. Scan Fonepay QR or transfer to 9841234567.\n3. Enter exact entry fee amount.\n4. Take screenshot & note Transaction ID.\n5. Submit details below.',
-      qrImageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80',
+      qrImageUrl: '/images/fonepay-qr.png',
       enabled: true,
       sortOrder: 1,
     },
@@ -113,14 +115,35 @@ async function main() {
   // 5. Tournaments
   const today = new Date().toISOString().split('T')[0];
 
+  const defaultSquadPointTable = JSON.stringify({
+    "1": 12,
+    "2": 9,
+    "3": 8,
+    "4": 7,
+    "5": 6,
+    "6": 5,
+    "7": 4,
+    "8": 3,
+    "9": 2,
+    "10": 1
+  });
+
   const t1 = await prisma.tournament.upsert({
     where: { slug: 'full-map-10am-daily' },
-    update: { maps: JSON.stringify(['Bermuda', 'Purgatory', 'Kalahari']) },
+    update: { 
+      type: 'SQUAD',
+      maps: JSON.stringify(['Bermuda', 'Purgatory', 'Kalahari']),
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable
+    },
     create: {
       name: 'Full Map — 10:00 AM Morning Scrim',
       slug: 'full-map-10am-daily',
       category: 'FULL_MAP',
       format: 'Squad',
+      type: 'SQUAD',
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable,
       description: 'Daily competitive Free Fire Full Map Squad Scrim. Battle against the top teams in Nepal.',
       rules: '1. All players must join room 10 mins before start time.\n2. Emote flex or hacking results in permanent ban.\n3. Squad must consist of 4 registered players.',
       date: today,
@@ -141,12 +164,20 @@ async function main() {
 
   const t2 = await prisma.tournament.upsert({
     where: { slug: 'full-map-1pm-afternoon' },
-    update: { maps: JSON.stringify(['Bermuda', 'Purgatory']) },
+    update: { 
+      type: 'SQUAD',
+      maps: JSON.stringify(['Bermuda', 'Purgatory']),
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable
+    },
     create: {
       name: 'Full Map — 1:00 PM Afternoon Battle',
       slug: 'full-map-1pm-afternoon',
       category: 'FULL_MAP',
       format: 'Squad',
+      type: 'SQUAD',
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable,
       description: 'Midday high-intensity squad scrim with NPR 3,000 guaranteed prize pool.',
       rules: '1. No double Vector or gun hacks allowed.\n2. Screenshots required for kill points proof.',
       date: today,
@@ -167,12 +198,20 @@ async function main() {
 
   const t3 = await prisma.tournament.upsert({
     where: { slug: 'full-map-7pm-prime' },
-    update: { maps: JSON.stringify(['Bermuda', 'Purgatory', 'Kalahari']) },
+    update: { 
+      type: 'SQUAD',
+      maps: JSON.stringify(['Bermuda', 'Purgatory', 'Kalahari']),
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable
+    },
     create: {
       name: 'Full Map — 7:00 PM Evening Grand Championship',
       slug: 'full-map-7pm-prime',
       category: 'FULL_MAP',
       format: 'Squad',
+      type: 'SQUAD',
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable,
       description: 'The main prime-time event of the day. High stakes, NPR 5,000 prize pool!',
       rules: '1. Official match lobby rules apply.\n2. Room details released 15 minutes before 7:00 PM.',
       date: today,
@@ -189,22 +228,29 @@ async function main() {
   });
 
   const t4 = await prisma.tournament.upsert({
-    where: { slug: 'clash-squad-1v1-duels' },
-    update: { maps: JSON.stringify(['Bermuda']) },
+    where: { slug: 'solo-per-kill-challenge' },
+    update: { 
+      type: 'SOLO',
+      soloScoringType: 'PER_KILL',
+      soloKillReward: 20
+    },
     create: {
-      name: 'Clash Squad — 1v1 Solo Kings',
-      slug: 'clash-squad-1v1-duels',
-      category: 'CLASH_SQUAD',
-      format: '1v1',
-      description: 'Single elimination 1v1 Clash Squad duel. Headshot supremacy!',
-      rules: '1. Desert Eagle & M1887 round only.\n2. Limited ammo: ON.',
+      name: 'Solo — Per Kill Deathmatch Rush',
+      slug: 'solo-per-kill-challenge',
+      category: 'FULL_MAP',
+      format: 'Solo',
+      type: 'SOLO',
+      soloScoringType: 'PER_KILL',
+      soloKillReward: 20,
+      description: 'Solo Per Kill Challenge! Win Rs. 20 for every single kill achieved in match.',
+      rules: '1. Solo play only.\n2. Team-up will result in instant disqualification.',
       date: today,
-      startTime: '5:00 PM',
-      registrationDeadline: '04:30 PM',
+      startTime: '4:00 PM',
+      registrationDeadline: '03:30 PM',
       entryFee: 50,
-      prizePool: 800,
-      totalSlots: 16,
-      registeredSlots: 8,
+      prizePool: 1500,
+      totalSlots: 48,
+      registeredSlots: 15,
       status: 'REGISTRATION_OPEN',
       maps: JSON.stringify(['Bermuda']),
       bannerUrl: 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=800&q=80',
@@ -213,12 +259,20 @@ async function main() {
 
   const t5 = await prisma.tournament.upsert({
     where: { slug: 'clash-squad-4v4-elite' },
-    update: { maps: JSON.stringify(['Bermuda', 'Kalahari']) },
+    update: { 
+      type: 'SQUAD',
+      maps: JSON.stringify(['Bermuda', 'Kalahari']),
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable
+    },
     create: {
       name: 'Clash Squad — 4v4 Elite Showdown',
       slug: 'clash-squad-4v4-elite',
       category: 'CLASH_SQUAD',
       format: '4v4',
+      type: 'SQUAD',
+      squadKillPoints: 1,
+      squadPointTable: defaultSquadPointTable,
       description: 'Fast-paced 4v4 Clash Squad series. Best of 7 rounds per match.',
       rules: '1. Standard 7-round competitive setting.\n2. Character skills enabled.',
       date: today,
@@ -276,7 +330,7 @@ async function main() {
   // 7. Registrations & Payments
   await prisma.registration.upsert({
     where: { registrationId: 'KS-REG-1001' },
-    update: {},
+    update: { points: 85, rank: 1 },
     create: {
       registrationId: 'KS-REG-1001',
       tournamentId: t1.id,
@@ -284,11 +338,40 @@ async function main() {
       userId: player1.id,
       status: 'CONFIRMED',
       paymentStatus: 'VERIFIED',
+      points: 85,
+      rank: 1,
       payment: {
         create: {
           paymentMethodId: fonepay.id,
           amount: 100,
           transactionId: 'FP-9823019482',
+          screenshotUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&q=80',
+          note: 'Paid via eSewa Fonepay QR',
+          status: 'APPROVED',
+          verifiedBy: admin.id,
+          verifiedAt: new Date(),
+        },
+      },
+    },
+  });
+
+  await prisma.registration.upsert({
+    where: { registrationId: 'KS-REG-1003' },
+    update: { points: 72, rank: 2 },
+    create: {
+      registrationId: 'KS-REG-1003',
+      tournamentId: t1.id,
+      teamId: squadApex.id,
+      userId: player2.id,
+      status: 'CONFIRMED',
+      paymentStatus: 'VERIFIED',
+      points: 72,
+      rank: 2,
+      payment: {
+        create: {
+          paymentMethodId: fonepay.id,
+          amount: 100,
+          transactionId: 'FP-9823019483',
           screenshotUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&q=80',
           note: 'Paid via eSewa Fonepay QR',
           status: 'APPROVED',
@@ -309,6 +392,7 @@ async function main() {
       userId: player2.id,
       status: 'PAYMENT_SUBMITTED',
       paymentStatus: 'SUBMITTED',
+      points: 0,
       payment: {
         create: {
           paymentMethodId: fonepay.id,
@@ -319,6 +403,35 @@ async function main() {
           status: 'PENDING',
         },
       },
+    },
+  });
+
+  // Demo Solo Registrations for t4
+  await prisma.registration.upsert({
+    where: { registrationId: 'KS-REG-1004' },
+    update: { points: 42, rank: 1 },
+    create: {
+      registrationId: 'KS-REG-1004',
+      tournamentId: t4.id,
+      userId: player1.id,
+      status: 'CONFIRMED',
+      paymentStatus: 'VERIFIED',
+      points: 42,
+      rank: 1,
+    },
+  });
+
+  await prisma.registration.upsert({
+    where: { registrationId: 'KS-REG-1005' },
+    update: { points: 35, rank: 2 },
+    create: {
+      registrationId: 'KS-REG-1005',
+      tournamentId: t4.id,
+      userId: player2.id,
+      status: 'CONFIRMED',
+      paymentStatus: 'VERIFIED',
+      points: 35,
+      rank: 2,
     },
   });
 
@@ -347,11 +460,11 @@ async function main() {
   await prisma.banner.deleteMany({});
   await prisma.banner.create({
     data: {
-      title: 'NEPAL\'S ULTIMATE FREE FIRE SCRIMS',
-      subtitle: 'Compete in Daily Full Map & Clash Squad Battles. Win Cash Prizes via Fonepay!',
-      buttonText: 'JOIN SCRIMS NOW',
+      title: 'KARMA SCRIMS FREE FIRE TOURNAMENT',
+      subtitle: 'Play · Compete · Win',
+      buttonText: 'JOIN NOW',
       buttonLink: '/tournaments',
-      imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&q=80',
+      imageUrl: '/images/hero-banner-1.png',
       isActive: true,
       sortOrder: 1,
     },

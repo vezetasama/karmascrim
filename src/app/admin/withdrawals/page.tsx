@@ -185,7 +185,7 @@ export default function AdminWithdrawalsPage() {
           </div>
           <div className="p-5 rounded-2xl bg-[#121722] border border-[#262F45]">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Total Payout Volume</span>
-            <span className="text-2xl font-black text-white mt-1 block">NPR {totalApprovedAmount.toLocaleString()}</span>
+            <span className="text-2xl font-black text-white mt-1 block">🪙 {totalApprovedAmount.toLocaleString()} COINS (Rs. {totalApprovedAmount.toLocaleString()})</span>
           </div>
           <div className="p-5 rounded-2xl bg-[#121722] border border-[#262F45]">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Rejected Requests</span>
@@ -291,8 +291,8 @@ export default function AdminWithdrawalsPage() {
 
                       {/* Amount */}
                       <td className="py-3 px-3 text-right whitespace-nowrap">
-                        <span className="font-black text-white text-sm block">NPR {req.amount.toLocaleString()}</span>
-                        <span className="text-[10px] text-emerald-400">Net: NPR {req.netAmount.toLocaleString()}</span>
+                        <span className="font-black text-white text-sm block">🪙 {req.amount.toLocaleString()} COINS</span>
+                        <span className="text-[10px] text-emerald-400">Payout: Rs. {req.netAmount.toLocaleString()}</span>
                       </td>
 
                       {/* Status Badge */}
@@ -376,12 +376,12 @@ export default function AdminWithdrawalsPage() {
               <div className="text-xs space-y-1 bg-[#0B0E14] p-3 rounded-2xl border border-[#262F45]">
                 <div>Request ID: <span className="font-mono font-bold text-[#FF9F1C]">{selectedReq.requestId}</span></div>
                 <div>User: <span className="font-bold text-white">{selectedReq.user?.name}</span></div>
-                <div>Amount: <span className="font-bold text-white">NPR {selectedReq.amount.toLocaleString()}</span></div>
+                <div>Amount: <span className="font-bold text-white">🪙 {selectedReq.amount.toLocaleString()} COINS</span></div>
                 <div>Method: <span className="font-bold text-gray-300">{selectedReq.method} ({selectedReq.accountNumber})</span></div>
               </div>
 
               <p className="text-xs text-gray-300">
-                Rejecting this request will immediately refund <strong>NPR {selectedReq.amount.toLocaleString()}</strong> back to the user's withdrawable earnings balance.
+                Rejecting this request will immediately refund <strong>🪙 {selectedReq.amount.toLocaleString()} COINS</strong> back to the user's withdrawable earnings balance.
               </p>
 
               <form onSubmit={handleRejectSubmit} className="space-y-4">

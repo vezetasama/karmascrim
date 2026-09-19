@@ -162,7 +162,7 @@ export async function notifyDepositSubmitted(
   return createNotification({
     userId,
     title: 'Deposit Request Submitted',
-    message: `Your deposit request of NPR ${amount.toLocaleString()} is pending admin approval. (Req: ${requestId}, Tx: ${transactionId})`,
+    message: `Your deposit request of ${amount.toLocaleString()} COINS (Rs. ${amount.toLocaleString()}) is pending admin approval. (Req: ${requestId}, Tx: ${transactionId})`,
     type: 'DEPOSIT',
     status: 'PENDING',
     relatedId: requestId,
@@ -180,7 +180,7 @@ export async function notifyDepositApproved(
   return createNotification({
     userId,
     title: 'Deposit Approved ✅',
-    message: `Your deposit of NPR ${amount.toLocaleString()} has been approved and added to your balance. New balance: NPR ${newBalance.toLocaleString()}.`,
+    message: `Your deposit of ${amount.toLocaleString()} COINS has been approved and added to your balance. New balance: 🪙 ${newBalance.toLocaleString()} COINS.`,
     type: 'DEPOSIT',
     status: 'SUCCESS',
     relatedId: requestId,
@@ -198,7 +198,7 @@ export async function notifyDepositRejected(
   return createNotification({
     userId,
     title: 'Deposit Rejected',
-    message: `Your deposit request of NPR ${amount.toLocaleString()} was rejected.${reason ? ` Reason: ${reason}` : ' Please check the reason in your wallet.'}`,
+    message: `Your deposit request of ${amount.toLocaleString()} COINS was rejected.${reason ? ` Reason: ${reason}` : ' Please check the reason in your wallet.'}`,
     type: 'DEPOSIT',
     status: 'FAILED',
     relatedId: requestId,
@@ -215,7 +215,7 @@ export async function notifyWithdrawalRequested(
   return createNotification({
     userId,
     title: 'Withdrawal Request Submitted',
-    message: `Your withdrawal request of NPR ${amount.toLocaleString()} has been submitted and is awaiting review. (Req: ${requestId})`,
+    message: `Your withdrawal request of ${amount.toLocaleString()} COINS (Payout: Rs. ${amount.toLocaleString()}) has been submitted and is awaiting review. (Req: ${requestId})`,
     type: 'WITHDRAWAL',
     status: 'PENDING',
     relatedId: requestId,
@@ -232,7 +232,7 @@ export async function notifyWithdrawalApproved(
   return createNotification({
     userId,
     title: 'Withdrawal Approved ✅',
-    message: `Your withdrawal of NPR ${amount.toLocaleString()} has been approved. Please check your payment account.`,
+    message: `Your withdrawal of ${amount.toLocaleString()} COINS (Rs. ${amount.toLocaleString()}) has been approved. Please check your payment account.`,
     type: 'WITHDRAWAL',
     status: 'SUCCESS',
     relatedId: requestId,
@@ -250,7 +250,7 @@ export async function notifyWithdrawalRejected(
   return createNotification({
     userId,
     title: 'Withdrawal Rejected',
-    message: `Your withdrawal request of NPR ${amount.toLocaleString()} was rejected.${reason ? ` Reason: ${reason}` : ' Please check the reason in your wallet.'}`,
+    message: `Your withdrawal request of ${amount.toLocaleString()} COINS was rejected.${reason ? ` Reason: ${reason}` : ' Please check the reason in your wallet.'}`,
     type: 'WITHDRAWAL',
     status: 'FAILED',
     relatedId: requestId,
@@ -267,7 +267,7 @@ export async function notifyWithdrawalCompleted(
   return createNotification({
     userId,
     title: 'Withdrawal Completed 💸',
-    message: `Your withdrawal of NPR ${amount.toLocaleString()} has been successfully processed.`,
+    message: `Your withdrawal of ${amount.toLocaleString()} COINS (Rs. ${amount.toLocaleString()}) has been successfully processed.`,
     type: 'WITHDRAWAL',
     status: 'SUCCESS',
     relatedId: requestId,
@@ -358,7 +358,7 @@ export async function notifyWalletAdjusted(
   return createNotification({
     userId,
     title: isCredit ? 'Wallet Balance Credited 💰' : 'Wallet Balance Adjusted',
-    message: `NPR ${Math.abs(amount).toLocaleString()} was ${isCredit ? 'added to' : 'deducted from'} your balance.${reason ? ` Reason: ${reason}.` : ''} New Balance: NPR ${newBalance.toLocaleString()}.`,
+    message: `${Math.abs(amount).toLocaleString()} COINS ${isCredit ? 'were added to' : 'were deducted from'} your balance.${reason ? ` Reason: ${reason}.` : ''} New Balance: 🪙 ${newBalance.toLocaleString()} COINS.`,
     type: 'DEPOSIT',
     status: isCredit ? 'SUCCESS' : 'PENDING',
     actionUrl: '/wallet',

@@ -30,6 +30,7 @@ model User {
   depositRequests DepositRequest[]
   withdrawalRequests WithdrawalRequest[]
   walletTransactions WalletTransaction[]
+  matchResults       MatchResult[]
 }
 
 model Tournament {
@@ -38,6 +39,7 @@ model Tournament {
   slug                 String         @unique
   category             String         // FULL_MAP, CLASH_SQUAD
   format               String         // Squad, 1v1, 2v2, 4v4
+  type                 String         @default("SQUAD") // "SOLO" or "SQUAD"
   description          String?
   rules                String?
   whatsappLink         String?
@@ -54,6 +56,16 @@ model Tournament {
   roomId               String?
   roomPassword         String?
   roomReleased         Boolean        @default(false)
+
+  // SOLO SCORING CONFIGURATION (ONLY active when type === "SOLO")
+  soloScoringType      String?        // "PER_KILL", "SURVIVAL", "KILL_AND_SURVIVAL"
+  soloKillReward       Int?           @default(0) // Rs. per kill
+  soloPlacementRewards String?        // JSON string e.g. {"1": 500, "2": 300, "3": 200}
+
+  // SQUAD SCORING CONFIGURATION (ONLY active when type === "SQUAD")
+  squadKillPoints      Int?           @default(1) // Points per kill (default: 1)
+  squadPointTable      String?        // JSON string e.g. {"1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1}
+
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 
@@ -98,6 +110,8 @@ model Registration {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   status         String       @default("PENDING_PAYMENT") // PENDING_PAYMENT, PAYMENT_SUBMITTED, CONFIRMED, REJECTED, CANCELLED, REFUNDED, COMPLETED
   paymentStatus  String       @default("UNPAID") // UNPAID, SUBMITTED, VERIFIED, REJECTED
+  points         Int          @default(0) // Point Table score
+  rank           Int?         // Auto-calculated rank based on points descending
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -161,12 +175,18 @@ model MatchResult {
   id              String   @id @default(uuid())
   matchId         String
   match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  teamId          String
-  team            Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId          String?
+  team            Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   placement       Int      // 1st, 2nd, etc.
   kills           Int      @default(0)
   placementPoints Int      @default(0)
+  killPoints      Int      @default(0)
+  otherPoints     Int      @default(0)
   totalPoints     Int      @default(0)
+  winningAmount   Int      @default(0) // Cash winning in NPR
+  payoutStatus    String   @default("PENDING") // PENDING, APPROVED, PAID
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

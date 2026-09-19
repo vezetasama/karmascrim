@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Lock, User, AlertCircle, ArrowRight, Eye, EyeOff, Flame } from 'lucide-react';
+import { ShieldAlert, Lock, User, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -70,18 +71,15 @@ export default function AdminLoginPage() {
           
           {/* Branding */}
           <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#FF2E4C] to-[#FF9F1C] flex items-center justify-center shadow-lg shadow-[#FF2E4C]/25">
-                <Flame className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-left">
-                <span className="text-lg font-extrabold tracking-wider text-white uppercase">
-                  KARMA <span className="text-[#FF2E4C]">SCRIMS</span>
-                </span>
-                <span className="block text-[9px] text-gray-400 font-semibold tracking-widest uppercase">
-                  Free Fire Esports Nepal
-                </span>
-              </div>
+            <div className="flex justify-center mb-2">
+              <Image
+                src="/images/logo.png"
+                alt="KARMA SCRIMS"
+                width={220}
+                height={130}
+                className="h-16 w-auto object-contain drop-shadow-[0_2px_12px_rgba(255,46,76,0.4)]"
+                priority
+              />
             </div>
 
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-900/30 border border-red-500/30 flex items-center justify-center mx-auto shadow-lg shadow-red-900/20">

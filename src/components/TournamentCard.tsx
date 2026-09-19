@@ -10,6 +10,7 @@ interface TournamentCardProps {
     id: string;
     slug: string;
     name: string;
+    type?: string;
     category: string; // FULL_MAP, CLASH_SQUAD
     format: string;
     date: string;
@@ -21,6 +22,8 @@ interface TournamentCardProps {
     status: string;
     maps?: string | string[] | null;
     bannerUrl?: string | null;
+    soloScoringType?: string | null;
+    soloKillReward?: number | null;
     registrations?: { id: string; status: string; userId?: string }[];
   };
 }
@@ -29,10 +32,40 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
   const { user: currentUser } = useUser();
 
   const isFullMap = tournament.category === 'FULL_MAP';
+  const isSolo = tournament.type === 'SOLO' || tournament.format === 'SOLO' || tournament.name?.toUpperCase().includes('SOLO');
+
   const percentageFull = Math.min(
     100,
     Math.round(((tournament.registeredSlots || 0) / (tournament.totalSlots || 48)) * 100)
   );
+
+  // Prize Pool display formatting for Solo & Squad
+  const getPrizePoolText = () => {
+    if (isSolo) {
+      const scoringType = tournament.soloScoringType;
+      const killCoins = tournament.soloKillReward ?? 0;
+      const doubleEntryFee = (tournament.entryFee || 0) * 2;
+
+      if (scoringType === 'PER_KILL') {
+        return `${killCoins} / KILL`;
+      }
+
+      if (scoringType === 'SURVIVAL') {
+        return doubleEntryFee > 0 ? doubleEntryFee.toLocaleString() : '0';
+      }
+
+      if (scoringType === 'KILL_AND_SURVIVAL') {
+        return `${killCoins}/KILL + 🪙 ${doubleEntryFee.toLocaleString()}`;
+      }
+
+      if (killCoins > 0) {
+        return `${killCoins} / KILL`;
+      }
+
+      return doubleEntryFee > 0 ? doubleEntryFee.toLocaleString() : (tournament.prizePool ? tournament.prizePool.toLocaleString() : '0');
+    }
+    return tournament.prizePool ? tournament.prizePool.toLocaleString() : '0';
+  };
 
   // Check if current logged in user has a confirmed registration for this tournament
   const userRegistration = currentUser?.registrations?.find(
@@ -159,7 +192,7 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
               : 'bg-[#FF9F1C]/15 border-[#FF9F1C]/40 text-[#FF9F1C]'
           }`}
         >
-          {isFullMap ? 'FULL MAP SQUAD' : `CLASH SQUAD (${tournament.format})`}
+          {isSolo ? 'SOLO' : 'SQUAD'}
         </span>
         {getStatusBadge(tournament.status)}
       </div>
@@ -178,7 +211,7 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
 
       {/* TOURNAMENT TITLE */}
       <div className="relative z-10 space-y-1">
-        <h3 className="text-base sm:text-lg font-black text-white group-hover:text-[#FF2E4C] transition-colors line-clamp-2 uppercase tracking-wide">
+        <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-[#FF2E4C] transition-colors line-clamp-2 uppercase tracking-wide">
           {tournament.name || 'FREE FIRE TOURNAMENT'}
         </h3>
       </div>
@@ -186,48 +219,49 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
       {/* PRIZE POOL & ENTRY FEE SECTION */}
       <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-[#0B0E14]/80 border border-[#262F45] relative z-10">
         <div>
-          <span className="block text-[10px] text-gray-400 uppercase font-extrabold tracking-wider">
+          <span className="block text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
             Prize Pool
           </span>
-          <span className="text-base sm:text-lg font-black text-[#FF9F1C] flex items-center gap-1 mt-0.5">
-            <Trophy className="w-4 h-4 text-[#FF9F1C]" />
-            NPR {tournament.prizePool ? tournament.prizePool.toLocaleString() : '0'}
+          <span className="text-base sm:text-lg font-bold text-[#FF9F1C] flex items-center gap-1 mt-0.5">
+            <Trophy className="w-4 h-4 text-[#FF9F1C] shrink-0" />
+            <span>🪙 {getPrizePoolText()}</span>
           </span>
         </div>
         <div>
-          <span className="block text-[10px] text-gray-400 uppercase font-extrabold tracking-wider">
+          <span className="block text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
             Entry Fee
           </span>
-          <span className="text-base sm:text-lg font-black text-white mt-0.5 block">
-            {tournament.entryFee === 0 ? 'FREE' : `NPR ${tournament.entryFee}`}
+          <span className="text-base sm:text-lg font-bold text-white mt-0.5 block flex items-center gap-1">
+            {tournament.entryFee === 0 ? 'FREE' : `🪙 ${tournament.entryFee}`}
           </span>
         </div>
       </div>
 
-      {/* SLOTS REGISTERED & PROGRESS BAR */}
-      <div className="relative z-10 space-y-1.5">
-        <div className="flex justify-between items-center text-xs font-semibold">
-          <span className="text-gray-400 flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-gray-400" />
-            Slots Registered
-          </span>
-          <span className="font-extrabold text-white">
-            {tournament.registeredSlots || 0} / {tournament.totalSlots || 48}
-          </span>
+      {!isSolo && (
+        <div className="relative z-10 space-y-1.5">
+          <div className="flex justify-between items-center text-xs font-semibold">
+            <span className="text-gray-400 flex items-center gap-1.5 font-medium">
+              <Users className="w-3.5 h-3.5 text-gray-400" />
+              Slots Registered
+            </span>
+            <span className="font-semibold text-white">
+              {tournament.registeredSlots || 0} / {tournament.totalSlots || 48}
+            </span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-[#0B0E14] overflow-hidden border border-[#262F45]">
+            <div
+              className="h-full bg-gradient-to-r from-[#FF2E4C] to-[#FF9F1C] transition-all duration-500 rounded-full"
+              style={{ width: `${percentageFull}%` }}
+            />
+          </div>
         </div>
-        <div className="w-full h-2 rounded-full bg-[#0B0E14] overflow-hidden border border-[#262F45]">
-          <div
-            className="h-full bg-gradient-to-r from-[#FF2E4C] to-[#FF9F1C] transition-all duration-500 rounded-full"
-            style={{ width: `${percentageFull}%` }}
-          />
-        </div>
-      </div>
+      )}
 
       {/* BOTTOM ACTION BUTTON */}
       <div className="pt-1 relative z-10">
         <Link
           href={`/tournaments/${tournament.id}`}
-          className={`w-full py-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border transition-all duration-300 shadow-md ${
+          className={`w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border transition-all duration-300 shadow-md ${
             isUserPaid
               ? 'bg-emerald-950/40 hover:bg-emerald-600 text-emerald-400 hover:text-white border-emerald-500/40 hover:border-emerald-500 shadow-emerald-500/10'
               : 'bg-[#161E2E] hover:bg-[#FF2E4C] text-white border-[#28354E] hover:border-[#FF2E4C] group-hover:shadow-[#FF2E4C]/20'
@@ -236,10 +270,10 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
           {isUserPaid ? (
             <>
               <Check className="w-4 h-4 text-emerald-400 group-hover:text-white" />
-              <span>PAID — View Details</span>
+              <span>PAID — Register Now</span>
             </>
           ) : (
-            <span>View Details</span>
+            <span>Register Now</span>
           )}
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>

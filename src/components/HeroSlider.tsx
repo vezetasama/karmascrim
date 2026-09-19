@@ -23,18 +23,21 @@ interface HeroSliderProps {
 // Fallback banner if DB has no active banners
 const DEFAULT_FALLBACK_BANNER: BannerItem = {
   id: 'default-fallback',
-  title: "NEPAL'S ULTIMATE FREE FIRE SCRIMS",
-  subtitle: 'Compete in Daily Full Map & Clash Squad Scrims. Battle for Glory & Cash Prizes!',
-  buttonText: 'JOIN SCRIMS NOW',
+  title: "KARMA SCRIMS FREE FIRE TOURNAMENT",
+  subtitle: 'Play · Compete · Win',
+  buttonText: 'JOIN NOW',
   buttonLink: '/tournaments',
-  imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&q=80',
+  imageUrl: '/images/hero-banner-1.png',
   isActive: true,
   sortOrder: 1,
 };
 
 export default function HeroSlider({ banners = [] }: HeroSliderProps) {
   const activeBanners = banners.filter((b) => b.isActive);
-  const displayBanners = activeBanners.length > 0 ? activeBanners : [DEFAULT_FALLBACK_BANNER];
+  const displayBanners = activeBanners.length > 0 ? activeBanners.map(b => ({
+    ...b,
+    imageUrl: b.imageUrl.includes('unsplash') ? '/images/hero-banner-1.png' : b.imageUrl
+  })) : [DEFAULT_FALLBACK_BANNER];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -88,7 +91,7 @@ export default function HeroSlider({ banners = [] }: HeroSliderProps) {
         onTouchEnd={handleTouchEnd}
       >
         {/* Banner Image Container with Aspect Ratio */}
-        <div className="relative w-full h-[220px] xs:h-[260px] sm:h-[340px] md:h-[400px] lg:h-[440px] overflow-hidden">
+        <div className="relative w-full aspect-[2.5/1] overflow-hidden">
           
           {/* Subtle Skeleton Loader */}
           {!imageLoaded && (
@@ -98,21 +101,18 @@ export default function HeroSlider({ banners = [] }: HeroSliderProps) {
           )}
 
           {/* Render Active Single Image */}
-          <div
+          <Link
+            href={currentBanner.buttonLink || '/tournaments'}
             key={currentBanner.id}
-            className="absolute inset-0 transition-opacity duration-500 ease-in-out"
+            className="block relative w-full h-full cursor-pointer transition-opacity duration-500 ease-in-out"
           >
             <img
               src={currentBanner.imageUrl}
               alt={currentBanner.title || 'Karma Scrims Banner'}
               onLoad={() => setImageLoaded(true)}
-              className="w-full h-full object-cover object-center transform transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+              className="w-full h-full object-cover object-center transform transition-transform duration-700 ease-out group-hover:scale-[1.01]"
             />
-
-            {/* Dark Esports Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/60 to-transparent sm:bg-gradient-to-r sm:from-[#0B0E14] sm:via-[#0B0E14]/75 sm:to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#FF2E4C]/10 via-transparent to-transparent pointer-events-none" />
-          </div>
+          </Link>
 
           {/* CONTROLS (Only visible if MULTIPLE active banners exist) */}
           {hasMultiple && (

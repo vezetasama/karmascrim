@@ -35,6 +35,14 @@ export async function GET(request: Request) {
         role: true,
         status: true,
         createdAt: true,
+        wallet: {
+          select: {
+            id: true,
+            balance: true,
+            depositBalance: true,
+            winningsBalance: true,
+          },
+        },
         _count: {
           select: {
             registrations: true,

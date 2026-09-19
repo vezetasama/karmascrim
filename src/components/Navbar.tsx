@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Flame, Home, Wallet, User, Shield, Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
+import { Home, Wallet, User, Shield, Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 
 function getRelativeTime(dateString: string) {
@@ -124,7 +125,7 @@ export default function Navbar() {
         triggerDesktopPushIfNew(data.notifications, newUnread);
         setUnreadCount(newUnread);
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const markAllRead = async () => {
@@ -136,7 +137,7 @@ export default function Navbar() {
       });
       setUnreadCount(0);
       setNotifications(notifications.map((n) => ({ ...n, read: true })));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const deleteNotification = async (e: React.MouseEvent, id: string) => {
@@ -147,7 +148,7 @@ export default function Navbar() {
       const updated = notifications.filter((n) => n.id !== id);
       setNotifications(updated);
       setUnreadCount(updated.filter((n) => !n.read).length);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const formattedBalance = (balance ?? 0).toLocaleString();
@@ -186,7 +187,12 @@ export default function Navbar() {
   const renderNotificationsDropdown = () => (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setNotificationsOpen(!notificationsOpen)}
+        onClick={async () => {
+          if (!notificationsOpen && unreadCount > 0) {
+            await markAllRead();
+          }
+          setNotificationsOpen(!notificationsOpen);
+        }}
         className="p-2 rounded-xl bg-[#121722] border border-[#262F45] text-gray-300 hover:text-white relative hover:border-[#FF2E4C] transition-colors"
         aria-label="Notifications"
       >
@@ -210,15 +216,6 @@ export default function Navbar() {
                 </span>
               )}
             </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                className="flex items-center gap-1 text-[11px] text-[#FF9F1C] hover:underline font-semibold"
-              >
-                <CheckCheck className="w-3.5 h-3.5" />
-                <span>Mark all read</span>
-              </button>
-            )}
           </div>
 
           {/* Push Notification Toggle Banner */}
@@ -246,11 +243,10 @@ export default function Navbar() {
                 return (
                   <div
                     key={n.id}
-                    className={`group relative p-3 rounded-xl border transition-all ${
-                      n.read
-                        ? 'bg-[#0B0E14]/40 border-[#262F45]/60 text-gray-400'
-                        : 'bg-[#1A2234] border-[#FF2E4C]/40 text-white shadow-sm'
-                    }`}
+                    className={`group relative p-3 rounded-xl border transition-all ${n.read
+                      ? 'bg-[#0B0E14]/40 border-[#262F45]/60 text-gray-400'
+                      : 'bg-[#1A2234] border-[#FF2E4C]/40 text-white shadow-sm'
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 mb-1">
@@ -323,19 +319,16 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
 
           {/* Left Side: Brand Logo */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <Link href="/" className="flex items-center space-x-2.5 sm:space-x-3 group">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#FF2E4C] to-[#FF9F1C] flex items-center justify-center shadow-lg shadow-[#FF2E4C]/25 group-hover:scale-105 transition-transform flex-shrink-0">
-                <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg sm:text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 uppercase leading-none sm:leading-normal">
-                  KARMA <span className="text-[#FF2E4C]">SCRIMS</span>
-                </span>
-                <span className="hidden xs:block text-[9px] sm:text-[10px] text-gray-400 font-semibold tracking-widest uppercase mt-0.5">
-                  Free Fire Esports Nepal
-                </span>
-              </div>
+          <div className="flex items-center pl-5 sm:pl-8">
+            <Link href="/" className="flex items-center group py-1">
+              <Image
+                src="/images/logo.png"
+                alt="KARMA SCRIMS"
+                width={280}
+                height={180}
+                className="h-14 sm:h-[62px] w-auto object-contain drop-shadow-[0_2px_14px_rgba(255,46,76,0.4)] transition-transform duration-200 group-hover:scale-105"
+                priority
+              />
             </Link>
           </div>
 
@@ -352,17 +345,16 @@ export default function Navbar() {
                   key={item.href}
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item)}
-                  className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    isActive
-                      ? 'bg-[#FF2E4C]/10 text-[#FF2E4C] border border-[#FF2E4C]/40 shadow-[0_0_12px_rgba(255,46,76,0.2)]'
-                      : 'bg-[#121722] text-gray-300 border border-[#262F45] hover:border-[#FF2E4C] hover:text-white'
-                  }`}
+                  className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${isActive
+                    ? 'bg-[#FF2E4C]/10 text-[#FF2E4C] border border-[#FF2E4C]/40 shadow-[0_0_12px_rgba(255,46,76,0.2)]'
+                    : 'bg-[#121722] text-gray-300 border border-[#262F45] hover:border-[#FF2E4C] hover:text-white'
+                    }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-[#FF2E4C]' : 'text-gray-400'}`} />
                   <span>{item.label}</span>
                   {item.label === 'Balance' && currentUser && balance !== undefined && (
-                    <span className="ml-1 text-[10px] sm:text-[11px] font-extrabold text-[#FF9F1C] bg-[#FF9F1C]/10 px-1.5 py-0.5 rounded-md border border-[#FF9F1C]/20">
-                      NPR {formattedBalance}
+                    <span className="ml-1 text-[10px] sm:text-[11px] font-extrabold text-[#FF9F1C] bg-[#FF9F1C]/10 px-1.5 py-0.5 rounded-md border border-[#FF9F1C]/20 flex items-center gap-1">
+                      🪙 {formattedBalance}
                     </span>
                   )}
                 </Link>
@@ -405,9 +397,8 @@ export default function Navbar() {
                   href="/wallet"
                   className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-[#121722] border border-[#262F45] text-xs font-extrabold text-white"
                 >
-                  <span>💰</span>
-                  <span className="text-[10px] font-bold text-gray-400">NPR</span>
-                  <span className="text-xs text-[#FF9F1C]">{formattedBalance}</span>
+                  <span>🪙</span>
+                  <span className="text-xs text-[#FF9F1C] font-black">{formattedBalance}</span>
                 </Link>
 
                 {/* Mobile Notifications Bell */}

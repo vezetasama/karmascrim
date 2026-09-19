@@ -17,9 +17,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please enter a valid deposit amount.' }, { status: 400 });
     }
 
-    if (!transactionId || typeof transactionId !== 'string' || !transactionId.trim()) {
-      return NextResponse.json({ error: 'Transaction ID / Reference number is required.' }, { status: 400 });
+    const trimmedTxId = (transactionId && typeof transactionId === 'string') ? transactionId.trim() : '';
+
+    if (!trimmedTxId && !screenshotUrl) {
+      return NextResponse.json({ error: 'Please enter a Transaction Code or upload a Payment Screenshot.' }, { status: 400 });
     }
+
+    const finalTxId = trimmedTxId || `TXN-${Math.floor(100000 + Math.random() * 900000)}`;
+
 
     // Resolve or fallback payment method
     let paymentMethod = null;
@@ -53,14 +58,14 @@ export async function POST(request: Request) {
     // Validate min and max deposit limits
     if (depositAmount < paymentMethod.minAmount) {
       return NextResponse.json(
-        { error: `Minimum deposit amount for ${paymentMethod.name} is NPR ${paymentMethod.minAmount}.` },
+        { error: `Minimum deposit amount for ${paymentMethod.name} is ${paymentMethod.minAmount} COINS (Rs. ${paymentMethod.minAmount}).` },
         { status: 400 }
       );
     }
 
     if (depositAmount > paymentMethod.maxAmount) {
       return NextResponse.json(
-        { error: `Maximum deposit amount for ${paymentMethod.name} is NPR ${paymentMethod.maxAmount}.` },
+        { error: `Maximum deposit amount for ${paymentMethod.name} is ${paymentMethod.maxAmount} COINS (Rs. ${paymentMethod.maxAmount}).` },
         { status: 400 }
       );
     }
@@ -68,7 +73,7 @@ export async function POST(request: Request) {
     // Check if duplicate transaction ID exists in PENDING or APPROVED status
     const existingTx = await db.depositRequest.findFirst({
       where: {
-        transactionId: transactionId.trim(),
+        transactionId: finalTxId,
         status: { in: ['PENDING', 'APPROVED'] },
       },
     });
@@ -91,7 +96,7 @@ export async function POST(request: Request) {
         userId: userSession.id,
         paymentMethodId: paymentMethod.id,
         amount: depositAmount,
-        transactionId: transactionId.trim(),
+        transactionId: finalTxId,
         screenshotUrl: screenshotUrl || null,
         note: note ? note.trim() : null,
         status: 'PENDING',
@@ -102,7 +107,7 @@ export async function POST(request: Request) {
     });
 
     // Notify user automatically
-    await notifyDepositSubmitted(userSession.id, depositAmount, requestId, transactionId.trim());
+    await notifyDepositSubmitted(userSession.id, depositAmount, requestId, finalTxId);
 
     return NextResponse.json({
       success: true,

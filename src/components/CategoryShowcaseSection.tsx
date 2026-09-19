@@ -67,11 +67,11 @@ export default function CategoryShowcaseSection({ initialTournaments = [] }: Cat
         <section className="space-y-6 pt-4 border-t border-[#262F45]/60">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#FF2E4C] flex items-center gap-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-[#FF2E4C] flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5 text-[#FF2E4C]" />
                 Live &amp; Upcoming Tournaments
               </span>
-              <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wide text-white mt-0.5">
+              <h2 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wide text-white mt-0.5">
                 {activeCategory === 'FULL_MAP' ? 'Full Map Squad Scrims' : 'Clash Squad Duels'}
               </h2>
             </div>

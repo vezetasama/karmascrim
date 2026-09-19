@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { Flame, ShieldCheck, Mail, Phone, Trophy } from 'lucide-react';
+import Image from 'next/image';
+import { ShieldCheck, Mail, Phone, Trophy } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -11,13 +12,14 @@ export default function Footer() {
           
           {/* Brand Col */}
           <div className="space-y-2 sm:space-y-3 md:col-span-1">
-            <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-[#FF2E4C] to-[#FF9F1C] flex items-center justify-center shadow-md">
-                <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <span className="text-base sm:text-xl font-extrabold text-white uppercase tracking-wider">
-                KARMA <span className="text-[#FF2E4C]">SCRIMS</span>
-              </span>
+            <Link href="/" className="inline-block group">
+              <Image
+                src="/images/logo.png"
+                alt="KARMA SCRIMS"
+                width={200}
+                height={117}
+                className="h-9 sm:h-12 w-auto object-contain drop-shadow-[0_2px_10px_rgba(255,46,76,0.3)] transition-transform duration-200 group-hover:scale-105"
+              />
             </Link>
             <p className="text-[10px] sm:text-xs text-gray-400 leading-relaxed">
               The premier Free Fire daily scrims and competitive tournament platform in Nepal. Built for serious players, squads, and esports aspirants.

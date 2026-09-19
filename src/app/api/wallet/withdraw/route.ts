@@ -34,15 +34,15 @@ export async function POST(request: Request) {
     const withdrawAmount = Number(amount);
     if (!withdrawAmount || isNaN(withdrawAmount) || withdrawAmount < 50) {
       return NextResponse.json(
-        { error: 'Minimum withdrawal amount is NPR 50.' },
+        { error: 'Minimum withdrawal amount is 50 COINS.' },
         { status: 400 }
       );
     }
 
-    const validMethods = ['ESEWA', 'KHALTI', 'BANK_TRANSFER'];
+    const validMethods = ['ESEWA', 'KHALTI'];
     if (!method || !validMethods.includes(method)) {
       return NextResponse.json(
-        { error: 'Invalid withdrawal method selected. Choose eSewa, Khalti, or Bank Transfer.' },
+        { error: 'Invalid withdrawal method selected. Choose eSewa or Khalti.' },
         { status: 400 }
       );
     }
@@ -53,10 +53,6 @@ export async function POST(request: Request) {
 
     if (!accountNumber || !accountNumber.trim()) {
       return NextResponse.json({ error: 'Account / Phone number is required.' }, { status: 400 });
-    }
-
-    if (method === 'BANK_TRANSFER' && (!bankName || !bankName.trim())) {
-      return NextResponse.json({ error: 'Bank name is required for bank transfers.' }, { status: 400 });
     }
 
     // Check duplicate pending request
@@ -87,7 +83,7 @@ export async function POST(request: Request) {
     if (withdrawAmount > currentWinnings) {
       return NextResponse.json(
         {
-          error: `Insufficient withdrawable tournament earnings. Your withdrawable balance is NPR ${currentWinnings.toLocaleString()}, but you requested NPR ${withdrawAmount.toLocaleString()}.`,
+          error: `Insufficient withdrawable tournament earnings. Your withdrawable balance is ${currentWinnings.toLocaleString()} COINS, but you requested ${withdrawAmount.toLocaleString()} COINS.`,
         },
         { status: 400 }
       );

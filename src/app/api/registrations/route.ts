@@ -114,7 +114,7 @@ export async function POST(request: Request) {
       if (wallet.balance < entryFee) {
         return NextResponse.json(
           {
-            error: `Insufficient wallet balance. Entry fee is NPR ${entryFee}, but your wallet balance is NPR ${wallet.balance}.`,
+            error: `Insufficient wallet balance. Entry fee is 🪙 ${entryFee} COIN, but your wallet balance is 🪙 ${wallet.balance} COIN.`,
             code: 'INSUFFICIENT_BALANCE',
             balance: wallet.balance,
             entryFee,

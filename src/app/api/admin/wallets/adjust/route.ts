@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { userId, amount, reason } = await request.json();
+    const { userId, amount, reason, targetType } = await request.json();
 
     const adjustAmount = Number(amount);
     if (!userId || isNaN(adjustAmount) || adjustAmount === 0) {
@@ -36,25 +36,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
 
+    const isWinnings = targetType === 'winnings';
+
     const result = await db.$transaction(
       async (tx) => {
         let wallet = await tx.wallet.findUnique({ where: { userId } });
         if (!wallet) {
           wallet = await tx.wallet.create({
-            data: { userId, balance: 0 },
+            data: { userId, balance: 0, depositBalance: 0, winningsBalance: 0 },
           });
         }
 
         const balanceBefore = wallet.balance;
-        const balanceAfter = balanceBefore + adjustAmount;
+        const currentDeposit = wallet.depositBalance ?? 0;
+        const currentWinnings = wallet.winningsBalance ?? 0;
 
-        if (balanceAfter < 0) {
-          throw new Error(`Adjustment would result in negative wallet balance (Current: NPR ${balanceBefore}).`);
+        let newDeposit = currentDeposit;
+        let newWinnings = currentWinnings;
+
+        if (isWinnings) {
+          newWinnings = currentWinnings + adjustAmount;
+          if (newWinnings < 0) {
+            throw new Error(`Deduction exceeds user's winnings balance (Current Winnings: 🪙 ${currentWinnings}).`);
+          }
+        } else {
+          newDeposit = currentDeposit + adjustAmount;
+          if (newDeposit < 0) {
+            throw new Error(`Deduction exceeds user's deposit balance (Current Deposit: 🪙 ${currentDeposit}).`);
+          }
         }
 
-        await tx.wallet.update({
+        const balanceAfter = newDeposit + newWinnings;
+
+        const updatedWallet = await tx.wallet.update({
           where: { id: wallet.id },
-          data: { balance: balanceAfter },
+          data: {
+            depositBalance: newDeposit,
+            winningsBalance: newWinnings,
+            balance: balanceAfter,
+          },
         });
 
         const txRecord = await tx.walletTransaction.create({
@@ -65,12 +85,12 @@ export async function POST(request: Request) {
             amount: adjustAmount,
             balanceBefore,
             balanceAfter,
-            description: `Admin Manual Adjustment: ${reason.trim()} (By: ${admin.name || admin.username})`,
+            description: `Admin Adjustment (${isWinnings ? 'Winnings' : 'Deposit'}): ${reason.trim()} (By: ${admin.name || admin.username})`,
             referenceId: `ADMIN-${admin.id}`,
           },
         });
 
-        return { wallet, balanceAfter, txRecord };
+        return { wallet: updatedWallet, balanceAfter, txRecord };
       },
       {
         timeout: 20000,
@@ -88,6 +108,7 @@ export async function POST(request: Request) {
       success: true,
       message: 'Wallet balance adjusted successfully.',
       newBalance: result.balanceAfter,
+      wallet: result.wallet,
       transaction: result.txRecord,
     });
   } catch (error: any) {

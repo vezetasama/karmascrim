@@ -137,31 +137,33 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
             {isConfirmedParticipant ? (
               <>
-                {/* WHATSAPP GROUP CHAT LINK FOR PAID PLAYERS */}
-                <div className="p-5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-[#25D366]/5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold shadow-lg shadow-[#25D366]/30 flex-shrink-0">
-                      <MessageCircle className="w-6 h-6 fill-current" />
+                {/* WHATSAPP GROUP CHAT LINK — SQUAD TOURNAMENTS ONLY */}
+                {tournament.type === 'SQUAD' && (
+                  <div className="p-5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-[#25D366]/5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold shadow-lg shadow-[#25D366]/30 flex-shrink-0">
+                        <MessageCircle className="w-6 h-6 fill-current" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider">
+                          Official Match WhatsApp Group
+                        </h4>
+                        <p className="text-[11px] text-gray-300 mt-0.5">
+                          Join to connect with match host &amp; receive instant room code alerts.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider">
-                        Official Match WhatsApp Group
-                      </h4>
-                      <p className="text-[11px] text-gray-300 mt-0.5">
-                        Join to connect with match host &amp; receive instant room code alerts.
-                      </p>
-                    </div>
+                    <a
+                      href={tournament.whatsappLink || 'https://chat.whatsapp.com'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-[#25D366]/30 flex-shrink-0"
+                    >
+                      <span>Join Group</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
                   </div>
-                  <a
-                    href={tournament.whatsappLink || 'https://chat.whatsapp.com'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-[#25D366]/30 flex-shrink-0"
-                  >
-                    <span>Join Group</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
+                )}
 
                 {/* ROOM CODE DETAILS */}
                 <div className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
@@ -283,6 +285,289 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               </>
             ) : null}
 
+            {/* ================================================== */}
+            {/* 🏆 POINT TABLE SECTION (SQUAD VS SOLO BEHAVIOR)    */}
+            {/* ================================================== */}
+            {tournament.type === 'SQUAD' ? (
+              /* 1. SQUAD POINT TABLE — SHOWS ALL REGISTERED TEAMS */
+              <div className="p-6 rounded-3xl bg-[#121722] border border-[#FF2E4C]/40 space-y-4 shadow-xl shadow-[#FF2E4C]/5">
+                <div className="flex items-center justify-between pb-3 border-b border-[#262F45]">
+                  <h3 className="text-sm font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-[#FF9F1C]" />
+                    <span>🏆 POINT TABLE</span>
+                  </h3>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#0B0E14] px-2.5 py-1 rounded-lg border border-[#262F45]">
+                    Official Squad Standings
+                  </span>
+                </div>
+
+                {(() => {
+                  const squadRegs = (tournament.registrations || [])
+                    .filter((r: any) => r.team || r.status === 'CONFIRMED')
+                    .sort((a: any, b: any) => {
+                      if (a.rank && b.rank) return a.rank - b.rank;
+                      return (b.points || 0) - (a.points || 0);
+                    });
+
+                  if (squadRegs.length === 0) {
+                    return (
+                      <p className="text-xs text-gray-500 py-6 text-center italic">
+                        Point table standings will appear once match scores are processed.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="overflow-x-auto rounded-xl border border-[#262F45]">
+                      <table className="w-full text-left text-xs text-gray-300">
+                        <thead className="bg-[#0B0E14] text-[#FF9F1C] uppercase text-[10px] font-bold border-b border-[#262F45]">
+                          <tr>
+                            <th className="p-3 w-16">#</th>
+                            <th className="p-3">TEAM</th>
+                            <th className="p-3 text-right">POINTS</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#262F45]">
+                          {squadRegs.map((reg: any, idx: number) => {
+                            const rankNum = reg.rank || idx + 1;
+                            const teamName = reg.team?.name || reg.user?.name || 'Squad';
+                            const pointsVal = reg.points || 0;
+
+                            const isTop1 = rankNum === 1;
+                            const isTop2 = rankNum === 2;
+                            const isTop3 = rankNum === 3;
+
+                            return (
+                              <tr
+                                key={reg.id}
+                                className={`transition-colors ${
+                                  isTop1
+                                    ? 'bg-[#FF2E4C]/10 hover:bg-[#FF2E4C]/20 border-l-4 border-l-[#FF2E4C]'
+                                    : isTop2
+                                    ? 'bg-slate-800/40 hover:bg-slate-800/60 border-l-4 border-l-slate-400'
+                                    : isTop3
+                                    ? 'bg-amber-950/20 hover:bg-amber-950/40 border-l-4 border-l-amber-500'
+                                    : 'hover:bg-[#1A2234]'
+                                }`}
+                              >
+                                <td className="p-3 font-mono font-black text-sm">
+                                  <span
+                                    className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black ${
+                                      isTop1
+                                        ? 'bg-[#FF2E4C] text-white shadow-md shadow-[#FF2E4C]/30'
+                                        : isTop2
+                                        ? 'bg-slate-400 text-slate-950 shadow-md'
+                                        : isTop3
+                                        ? 'bg-amber-500 text-slate-950 shadow-md'
+                                        : 'bg-[#0B0E14] text-gray-400 border border-[#262F45]'
+                                    }`}
+                                  >
+                                    #{rankNum}
+                                  </span>
+                                </td>
+
+                                <td className="p-3 font-bold text-white text-xs sm:text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span>{teamName}</span>
+                                    {isTop1 && <span className="text-xs">👑</span>}
+                                  </div>
+                                </td>
+
+                                <td className="p-3 text-right font-mono font-black text-sm text-[#FF9F1C]">
+                                  <span className="px-3 py-1 rounded-lg bg-[#0B0E14] border border-[#262F45]">
+                                    {pointsVal} PTS
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : isConfirmedParticipant ? (
+              /* 2. SOLO POINT TABLE — SHOWS ONLY LOGGED-IN PLAYER'S OWN POINTS & POSITION */
+              <div className="p-6 rounded-3xl bg-[#121722] border border-amber-500/40 space-y-4 shadow-xl shadow-amber-500/5">
+                <div className="flex items-center justify-between pb-3 border-b border-[#262F45]">
+                  <h3 className="text-sm font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                    <span>🏆 MY POINTS</span>
+                  </h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-lg border border-amber-500/30">
+                    Private Player Standings
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* POSITION */}
+                  <div className="p-4 rounded-2xl bg-[#0B0E14] border border-amber-500/30 text-center space-y-1">
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      YOUR POSITION / RANK
+                    </span>
+                    <span className="text-3xl font-black font-mono text-amber-400 block">
+                      #{userRegistration?.rank || '—'}
+                    </span>
+                  </div>
+
+                  {/* PLAYER */}
+                  <div className="p-4 rounded-2xl bg-[#0B0E14] border border-[#262F45] text-center space-y-1">
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      PLAYER NAME
+                    </span>
+                    <span className="text-base font-extrabold text-white block truncate">
+                      {userRegistration?.user?.name || currentUser?.name || 'Solo Participant'}
+                    </span>
+                    <span className="text-[10px] font-mono text-gray-400 block">
+                      UID: {userRegistration?.user?.freeFireUid || currentUser?.freeFireUid || 'N/A'}
+                    </span>
+                  </div>
+
+                  {/* POINTS */}
+                  <div className="p-4 rounded-2xl bg-[#0B0E14] border border-emerald-500/30 text-center space-y-1">
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      YOUR TOTAL POINTS
+                    </span>
+                    <span className="text-3xl font-black font-mono text-emerald-400 block">
+                      {userRegistration?.points || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* OFFICIAL MATCH RESULTS & LEADERBOARD DASHBOARD */}
+            {tournament.matches && tournament.matches.some((m: any) => m.results?.length > 0) && (
+              <div className="p-6 rounded-3xl bg-[#121722] border border-[#FF9F1C]/40 space-y-5 shadow-xl shadow-[#FF9F1C]/5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#262F45] gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl bg-[#FF9F1C]/10 text-[#FF9F1C] flex items-center justify-center font-bold border border-[#FF9F1C]/30">
+                      <Trophy className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black uppercase text-white tracking-wider flex items-center gap-2">
+                        Official Match Leaderboard & Standings
+                      </h3>
+                      <p className="text-[11px] text-gray-400">
+                        {isFullMap ? 'Verified Full Map Standings' : 'Verified Clash Squad Results'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 w-max">
+                    Official Results Published
+                  </span>
+                </div>
+
+                {tournament.matches.map((matchItem: any) => {
+                  if (!matchItem.results || matchItem.results.length === 0) return null;
+
+                  const isSquad = tournament.type !== 'SOLO';
+
+                  return (
+                    <div key={matchItem.id} className="space-y-3">
+                      <div className="text-xs font-extrabold text-[#FF9F1C] uppercase tracking-wider flex items-center justify-between bg-[#0B0E14] px-3.5 py-2 rounded-xl border border-[#262F45]">
+                        <span>Match #{matchItem.matchNumber} Standings</span>
+                        <span className="text-[10px] text-gray-400 font-normal">
+                          {isSquad ? 'Points Table Breakdown' : 'Individual Cash Reward Breakdown'}
+                        </span>
+                      </div>
+
+                      <div className="overflow-x-auto rounded-xl border border-[#262F45]">
+                        <table className="w-full text-left text-xs text-gray-300">
+                          <thead className="bg-[#0B0E14] text-[#FF9F1C] uppercase text-[10px] font-bold border-b border-[#262F45]">
+                            <tr>
+                              <th className="p-3">Rank</th>
+                              <th className="p-3">{isSquad ? 'Team Name' : 'Player Name'}</th>
+                              <th className="p-3">Kills</th>
+                              {isSquad ? (
+                                <>
+                                  <th className="p-3">Placement Points</th>
+                                  <th className="p-3">Other Applicable Points</th>
+                                  <th className="p-3">Total Points</th>
+                                  <th className="p-3">Winning Amount</th>
+                                </>
+                              ) : (
+                                <>
+                                  <th className="p-3">Scoring Type</th>
+                                  <th className="p-3">Winning Amount</th>
+                                </>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#262F45]">
+                            {matchItem.results.map((res: any) => {
+                              const rankDisplay = `#${res.placement}`;
+                              const entityName = isSquad 
+                                ? (res.team?.name || 'Squad') 
+                                : (res.user?.name || res.user?.username || 'Solo Player');
+                              const subText = isSquad
+                                ? `Captain: ${res.team?.captain?.name || 'N/A'}`
+                                : `UID: ${res.user?.freeFireUid || 'N/A'}`;
+
+                              return (
+                                <tr key={res.id} className="hover:bg-[#1A2234] transition-colors">
+                                  <td className="p-3 font-mono font-black text-white text-sm">
+                                    <span className={`inline-block px-2.5 py-0.5 rounded ${
+                                      res.placement === 1 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-extrabold' :
+                                      res.placement === 2 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/40' :
+                                      res.placement === 3 ? 'bg-amber-700/20 text-amber-500 border border-amber-700/40' : 'text-gray-400'
+                                    }`}>
+                                      {rankDisplay}
+                                    </span>
+                                  </td>
+
+                                  <td className="p-3 font-bold text-white">
+                                    <div>{entityName}</div>
+                                    <div className="text-[10px] text-gray-400 font-normal">{subText}</div>
+                                  </td>
+
+                                  <td className="p-3 font-mono font-bold text-gray-200">
+                                    {res.kills}
+                                  </td>
+
+                                  {isSquad ? (
+                                    <>
+                                      <td className="p-3 font-mono text-gray-300 font-bold">
+                                        {res.placementPoints}
+                                      </td>
+
+                                      <td className="p-3 font-mono text-gray-400 font-medium">
+                                        {res.otherPoints || 0}
+                                      </td>
+
+                                      <td className="p-3 font-mono text-[#FF9F1C] font-extrabold text-sm">
+                                        {res.totalPoints} pts
+                                      </td>
+
+                                      <td className="p-3 font-mono text-emerald-400 font-black text-sm">
+                                        {res.winningAmount > 0 ? `Rs. ${res.winningAmount.toLocaleString()}` : '—'}
+                                      </td>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <td className="p-3 text-[11px] text-gray-300 font-semibold">
+                                        {tournament.soloScoringType || 'PER_KILL'}
+                                      </td>
+
+                                      <td className="p-3 font-mono text-emerald-400 font-black text-sm">
+                                        {res.winningAmount > 0 ? `Rs. ${res.winningAmount.toLocaleString()}` : '—'}
+                                      </td>
+                                    </>
+                                  )}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* REGISTERED TEAMS ROSTER */}
             <div className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
               <div className="flex items-center justify-between">
@@ -302,13 +587,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                         <span className="w-6 h-6 rounded-full bg-[#0B0E14] text-gray-400 font-bold flex items-center justify-center text-[10px]">
                           {idx + 1}
                         </span>
-                        <div>
-                          <div className="font-bold text-white">
-                            {reg.team?.name || reg.user?.name || 'Solo Participant'}
-                          </div>
-                          <div className="text-[10px] text-gray-400">
-                            Captain: {reg.user?.name} (UID: {reg.user?.freeFireUid || 'N/A'})
-                          </div>
+                        <div className="font-bold text-white">
+                          {reg.team?.name || reg.user?.name || 'Solo Participant'}
                         </div>
                       </div>
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
@@ -334,14 +614,35 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 <div>
                   <span className="block text-[10px] text-gray-400 uppercase font-semibold">Prize Pool</span>
                   <span className="text-lg font-extrabold text-[#FF9F1C] flex items-center gap-1">
-                    <Trophy className="w-4 h-4" />
-                    NPR {tournament.prizePool.toLocaleString()}
+                    <Trophy className="w-4 h-4 shrink-0" />
+                    <span>
+                      🪙 {(() => {
+                        const isSolo = tournament.type === 'SOLO' || tournament.format === 'SOLO' || tournament.name?.toUpperCase().includes('SOLO');
+                        if (isSolo) {
+                          if (tournament.soloScoringType === 'PER_KILL') {
+                            return `${tournament.soloKillReward || 0} / KILL`;
+                          }
+                          if (tournament.soloScoringType === 'SURVIVAL') {
+                            return `${((tournament.entryFee || 0) * 2).toLocaleString()}`;
+                          }
+                          if (tournament.soloScoringType === 'KILL_AND_SURVIVAL') {
+                            return `${tournament.soloKillReward || 0}/KILL + 🪙 ${((tournament.entryFee || 0) * 2).toLocaleString()}`;
+                          }
+                          if (tournament.soloKillReward && tournament.soloKillReward > 0) {
+                            return `${tournament.soloKillReward} / KILL`;
+                          }
+                          const doubleFee = (tournament.entryFee || 0) * 2;
+                          return doubleFee > 0 ? doubleFee.toLocaleString() : tournament.prizePool.toLocaleString();
+                        }
+                        return tournament.prizePool ? tournament.prizePool.toLocaleString() : '0';
+                      })()}
+                    </span>
                   </span>
                 </div>
                 <div>
                   <span className="block text-[10px] text-gray-400 uppercase font-semibold">Entry Fee</span>
-                  <span className="text-lg font-extrabold text-white">
-                    {tournament.entryFee === 0 ? 'FREE' : `NPR ${tournament.entryFee}`}
+                  <span className="text-lg font-extrabold text-white flex items-center gap-1">
+                    {tournament.entryFee === 0 ? 'FREE' : `🪙 ${tournament.entryFee}`}
                   </span>
                 </div>
               </div>
@@ -359,10 +660,6 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                     <Clock className="w-3.5 h-3.5 text-[#FF9F1C]" /> Start Time:
                   </span>
                   <span className="font-bold text-white">{tournament.startTime}</span>
-                </div>
-                <div className="flex items-center justify-between text-gray-300">
-                  <span className="text-gray-400">Reg Deadline:</span>
-                  <span className="font-semibold text-gray-300">{tournament.registrationDeadline}</span>
                 </div>
               </div>
 

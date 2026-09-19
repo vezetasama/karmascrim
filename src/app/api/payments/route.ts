@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       data: {
         userId: userSession.id,
         title: 'Payment Submitted',
-        message: `Your payment of NPR ${paymentAmount} (Tx: ${transactionId}) for ${registration.tournament.name} has been received and is pending admin verification.`,
+        message: `Your payment of 🪙 ${paymentAmount} COIN (Tx: ${transactionId}) for ${registration.tournament.name} has been received and is pending admin verification.`,
         linkUrl: '/dashboard',
       },
     });

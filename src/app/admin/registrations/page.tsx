@@ -208,7 +208,7 @@ export default function AdminRegistrationsPage() {
                         {reg.payment ? (
                           <div>
                             <div className="font-mono text-[#FF9F1C] font-bold">{reg.payment.transactionId}</div>
-                            <div className="text-[10px] text-white">NPR {reg.payment.amount}</div>
+                            <div className="text-[10px] text-white">🪙 {reg.payment.amount} COIN</div>
                           </div>
                         ) : (
                           <span className="text-gray-500 italic">No payment submitted</span>

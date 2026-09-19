@@ -241,7 +241,7 @@ export default function RegistrationModal({ tournament, isOpen, onClose, onSucce
               </span>
               <h2 className="text-lg sm:text-xl font-extrabold text-white mt-1">{tournament.name}</h2>
               <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                <span>Entry Fee: <strong className="text-[#FF9F1C]">NPR {tournament.entryFee}</strong></span>
+                <span>Entry Fee: <strong className="text-[#FF9F1C]">🪙 {tournament.entryFee} COIN</strong></span>
                 <span>•</span>
                 <span>Format: <strong>{tournament.format}</strong></span>
               </div>
@@ -360,20 +360,20 @@ export default function RegistrationModal({ tournament, isOpen, onClose, onSucce
                       <Loader2 className="w-4 h-4 text-[#FF2E4C] animate-spin" />
                     ) : (
                       <span className="text-xs font-black text-[#FF9F1C]">
-                        NPR {(walletBalance ?? 0).toLocaleString()}
+                        🪙 {(walletBalance ?? 0).toLocaleString()} COIN
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-baseline justify-between text-xs pt-1">
                     <span className="text-gray-400">Tournament Entry Fee:</span>
-                    <span className="font-extrabold text-white text-base">NPR {tournament.entryFee}</span>
+                    <span className="font-extrabold text-white text-base">🪙 {tournament.entryFee} COIN</span>
                   </div>
 
                   <div className="flex items-baseline justify-between text-xs pt-1 border-t border-[#262F45]">
                     <span className="text-gray-400">Wallet Balance After Payment:</span>
                     <span className={`font-mono font-bold text-sm ${hasSufficientBalance ? 'text-emerald-400' : 'text-red-400'}`}>
-                      NPR {((walletBalance ?? 0) - tournament.entryFee).toLocaleString()}
+                      🪙 {((walletBalance ?? 0) - tournament.entryFee).toLocaleString()} COIN
                     </span>
                   </div>
                 </div>
@@ -386,7 +386,7 @@ export default function RegistrationModal({ tournament, isOpen, onClose, onSucce
                       <div>
                         <div className="font-bold uppercase text-[11px]">Insufficient Wallet Balance</div>
                         <p className="mt-0.5">
-                          You need <strong>NPR {tournament.entryFee - (walletBalance ?? 0)}</strong> more to register for this tournament. Please top up your wallet via Fonepay.
+                          You need <strong>{tournament.entryFee - (walletBalance ?? 0)} COIN</strong> more to register for this tournament. Please top up your wallet via Fonepay (1 RS = 1 COIN).
                         </p>
                       </div>
                     </div>
@@ -397,7 +397,7 @@ export default function RegistrationModal({ tournament, isOpen, onClose, onSucce
                       className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#FF9F1C] to-[#e08912] text-slate-950 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md"
                     >
                       <PlusCircle className="w-4 h-4" />
-                      <span>Add Money via Fonepay Now</span>
+                      <span>Add Money via Fonepay (1 RS = 1 COIN)</span>
                     </Link>
                   </div>
                 )}
@@ -417,7 +417,7 @@ export default function RegistrationModal({ tournament, isOpen, onClose, onSucce
                     className="px-6 py-3 rounded-2xl bg-[#FF2E4C] hover:bg-[#D61F3B] disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#FF2E4C]/30"
                   >
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    <span>Confirm & Pay NPR {tournament.entryFee}</span>
+                    <span>Confirm & Pay 🪙 {tournament.entryFee} COIN</span>
                   </button>
                 </div>
 

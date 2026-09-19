@@ -13,7 +13,6 @@ import {
   Landmark,
   ShieldCheck,
   Clock,
-  Sparkles,
   ArrowUpRight,
   Building2,
   Phone,
@@ -24,12 +23,11 @@ export default function WithdrawEarningsPage() {
   const [winningsBalance, setWinningsBalance] = useState<number>(0);
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [amount, setAmount] = useState<string>('');
-  const [method, setMethod] = useState<'ESEWA' | 'KHALTI' | 'BANK_TRANSFER'>('ESEWA');
+  const [method, setMethod] = useState<'ESEWA' | 'KHALTI'>('ESEWA');
 
   // Account Details State
   const [accountName, setAccountName] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState<string>('');
-  const [bankName, setBankName] = useState<string>('');
 
   const [loading, setLoading] = useState<boolean>(true);
   const [isUnauthorized, setIsUnauthorized] = useState<boolean>(false);
@@ -108,12 +106,12 @@ export default function WithdrawEarningsPage() {
 
     const numAmount = Number(amount);
     if (!numAmount || isNaN(numAmount) || numAmount < 50) {
-      setError('Minimum withdrawal amount is NPR 50.');
+      setError('Minimum withdrawal amount is 50 COINS.');
       return;
     }
 
     if (numAmount > winningsBalance) {
-      setError(`Insufficient withdrawable earnings balance. Maximum available is NPR ${winningsBalance.toLocaleString()}.`);
+      setError(`Insufficient withdrawable earnings balance. Maximum available is ${winningsBalance.toLocaleString()} COINS.`);
       return;
     }
 
@@ -124,11 +122,6 @@ export default function WithdrawEarningsPage() {
 
     if (!accountNumber.trim()) {
       setError('Please enter your account / phone number.');
-      return;
-    }
-
-    if (method === 'BANK_TRANSFER' && !bankName.trim()) {
-      setError('Please enter your bank name.');
       return;
     }
 
@@ -143,7 +136,6 @@ export default function WithdrawEarningsPage() {
           method,
           accountName: accountName.trim(),
           accountNumber: accountNumber.trim(),
-          bankName: bankName.trim(),
         }),
       });
 
@@ -182,16 +174,12 @@ export default function WithdrawEarningsPage() {
 
         {/* Page Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-[#FF9F1C]/20 to-[#FF2E4C]/20 border border-[#FF9F1C]/40 text-[#FF9F1C] text-xs font-black uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF9F1C]" />
-            <span>Direct eSewa, Khalti & Bank Payouts</span>
-          </div>
           <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-wide text-white flex items-center justify-center gap-2">
             <Landmark className="w-7 h-7 text-[#FF9F1C]" />
             Withdraw Earnings
           </h1>
           <p className="text-xs sm:text-sm text-gray-400 max-w-lg mx-auto">
-            Withdraw your verified tournament winnings directly to your mobile wallet or bank account.
+            Withdraw your verified tournament winnings directly to your wallet.
           </p>
         </div>
 
@@ -225,7 +213,7 @@ export default function WithdrawEarningsPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Withdrawal Amount:</span>
-                <span className="font-black text-white text-base">NPR {createdWithdrawal.amount.toLocaleString()}</span>
+                <span className="font-black text-white text-base">🪙 {createdWithdrawal.amount.toLocaleString()} COINS (Rs. {createdWithdrawal.amount.toLocaleString()})</span>
               </div>
               <div className="flex justify-between items-center text-gray-400 text-[11px]">
                 <span>Payout Method:</span>
@@ -239,12 +227,6 @@ export default function WithdrawEarningsPage() {
                 <span>Account / Phone:</span>
                 <span className="font-mono text-gray-200">{createdWithdrawal.accountNumber}</span>
               </div>
-              {createdWithdrawal.bankName && (
-                <div className="flex justify-between items-center text-gray-400 text-[11px]">
-                  <span>Bank Name:</span>
-                  <span className="text-gray-200">{createdWithdrawal.bankName}</span>
-                </div>
-              )}
               <div className="flex justify-between items-center pt-2 border-t border-[#262F45]">
                 <span className="text-gray-400">Status:</span>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center gap-1">
@@ -285,13 +267,11 @@ export default function WithdrawEarningsPage() {
               </div>
 
               <div className="text-3xl sm:text-4xl font-black text-white flex items-baseline gap-2">
-                <span className="text-[#FF9F1C]">NPR</span>
+                <span>🪙</span>
                 <span>{winningsBalance.toLocaleString()}</span>
+                <span className="text-[#FF9F1C] text-lg font-bold">COINS</span>
               </div>
 
-              <p className="text-[11px] text-gray-400">
-                Deposited funds cannot be withdrawn. Minimum withdrawal is <strong>NPR 50</strong>. Withdrawal fee: <strong>NPR 0</strong>.
-              </p>
             </div>
 
             {/* WITHDRAWAL FORM FIELDS */}
@@ -300,11 +280,11 @@ export default function WithdrawEarningsPage() {
               {/* Amount Input */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                  Withdrawal Amount (NPR)
+                  Withdrawal Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-[#FF9F1C]">
-                    NPR
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-[#FF9F1C] flex items-center gap-1">
+                    🪙 COIN
                   </span>
                   <input
                     type="number"
@@ -315,8 +295,8 @@ export default function WithdrawEarningsPage() {
                       setAmount(e.target.value);
                       setError('');
                     }}
-                    placeholder="Enter amount (min. 50)"
-                    className="w-full pl-14 pr-4 py-3.5 rounded-2xl bg-[#0B0E14] border border-[#262F45] text-lg font-black text-white focus:outline-none focus:border-[#FF9F1C]"
+                    placeholder="Enter coins (min. 50)"
+                    className="w-full pl-28 pr-4 py-3.5 rounded-2xl bg-[#0B0E14] border border-[#262F45] text-lg font-black text-white focus:outline-none focus:border-[#FF9F1C]"
                     required
                   />
                 </div>
@@ -331,7 +311,7 @@ export default function WithdrawEarningsPage() {
                         onClick={() => setAmount(Math.min(val, winningsBalance).toString())}
                         className="px-3 py-1 rounded-xl bg-[#0B0E14] border border-[#262F45] hover:border-[#FF9F1C] text-xs font-bold text-gray-300 transition-colors"
                       >
-                        NPR {val}
+                        🪙 {val} COIN
                       </button>
                     ))}
                     <button
@@ -339,7 +319,7 @@ export default function WithdrawEarningsPage() {
                       onClick={() => setAmount(winningsBalance.toString())}
                       className="px-3 py-1 rounded-xl bg-[#FF9F1C]/20 border border-[#FF9F1C]/40 text-[#FF9F1C] text-xs font-extrabold uppercase hover:bg-[#FF9F1C]/30 transition-colors"
                     >
-                      Max (NPR {winningsBalance.toLocaleString()})
+                      Max ({winningsBalance.toLocaleString()} COINS)
                     </button>
                   </div>
                 )}
@@ -351,7 +331,7 @@ export default function WithdrawEarningsPage() {
                   Select Payout Method
                 </label>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setMethod('ESEWA')}
@@ -375,46 +355,14 @@ export default function WithdrawEarningsPage() {
                   >
                     Khalti
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMethod('BANK_TRANSFER')}
-                    className={`p-3.5 rounded-2xl border text-xs font-extrabold text-center transition-all ${
-                      method === 'BANK_TRANSFER'
-                        ? 'bg-amber-950/40 border-[#FF9F1C] text-[#FF9F1C] shadow-lg shadow-amber-950/50'
-                        : 'bg-[#0B0E14] border-[#262F45] text-gray-400 hover:border-gray-600'
-                    }`}
-                  >
-                    Bank Transfer
-                  </button>
                 </div>
               </div>
 
               {/* Account Details Form */}
               <div className="space-y-4 pt-2 border-t border-[#262F45]">
-                
-                {method === 'BANK_TRANSFER' && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                      Bank Name *
-                    </label>
-                    <div className="relative">
-                      <Building2 className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        placeholder="e.g. Nabil Bank / NIC Asia / Global IME"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs font-bold text-white focus:outline-none focus:border-[#FF9F1C]"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                    Account Holder Name *
+                    Account Holder Name
                   </label>
                   <div className="relative">
                     <UserIcon className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -431,13 +379,13 @@ export default function WithdrawEarningsPage() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-                    {method === 'BANK_TRANSFER' ? 'Bank Account Number *' : `${method === 'ESEWA' ? 'eSewa' : 'Khalti'} ID / Mobile Number *`}
+                    {method === 'ESEWA' ? 'eSewa ID' : 'Khalti ID / Mobile Number *'}
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
-                      placeholder={method === 'BANK_TRANSFER' ? 'e.g. 01928371290382' : 'e.g. 9812345678'}
+                      placeholder="e.g. 9812345678"
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs font-mono font-bold text-white focus:outline-none focus:border-[#FF9F1C]"
@@ -452,15 +400,15 @@ export default function WithdrawEarningsPage() {
               <div className="p-4 rounded-2xl bg-[#0B0E14] border border-[#262F45] space-y-2 text-xs">
                 <div className="flex justify-between items-center text-gray-400">
                   <span>Requested Amount:</span>
-                  <span className="font-bold text-white">NPR {Number(amount || 0).toLocaleString()}</span>
+                  <span className="font-bold text-white">🪙 {Number(amount || 0).toLocaleString()} COINS</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-400">
                   <span>Withdrawal Fee:</span>
-                  <span className="font-bold text-emerald-400">NPR 0 (FREE)</span>
+                  <span className="font-bold text-emerald-400">0 COIN (FREE)</span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-[#262F45] text-sm">
-                  <span className="font-bold text-gray-200">Net Amount to Receive:</span>
-                  <span className="font-black text-[#FF9F1C]">NPR {Number(amount || 0).toLocaleString()}</span>
+                  <span className="font-bold text-gray-200">Payout Amount (Rs.):</span>
+                  <span className="font-black text-[#FF9F1C]">Rs. {Number(amount || 0).toLocaleString()}</span>
                 </div>
               </div>
 
