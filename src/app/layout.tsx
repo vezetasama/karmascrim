@@ -6,7 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Karma Scrims — Free Fire Esports Tournament Platform Nepal',
   description:
-    'Compete in daily Free Fire Full Map Squad Scrims and Clash Squad duels. Fonepay verified payments, instant room release, real-time leaderboards, and guaranteed prize payouts.',
+    'Compete in daily Free Fire Full Map Solo Scrims (Per Kill & Survival modes). Fonepay verified payments, instant room release, real-time leaderboards, and guaranteed prize payouts.',
 };
 
 export default function RootLayout({

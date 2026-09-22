@@ -65,11 +65,6 @@ export default function EditRegistrationModal({
       return;
     }
 
-    if (!isSolo && !teamName.trim()) {
-      setError('Squad Team Name is required for Squad tournaments.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
@@ -81,7 +76,6 @@ export default function EditRegistrationModal({
         body: JSON.stringify({
           freeFireName: ign.trim(),
           freeFireUid: uid.trim(),
-          teamName: isSolo ? undefined : teamName.trim(),
         }),
       });
 
@@ -93,6 +87,9 @@ export default function EditRegistrationModal({
       }
 
       setSuccessMsg('Details updated successfully!');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('karma_refresh'));
+      }
       setTimeout(() => {
         onSuccess();
         onClose();
@@ -150,24 +147,6 @@ export default function EditRegistrationModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* SQUAD TEAM NAME (SQUAD ONLY) */}
-            {!isSolo && (
-              <div>
-                <label className="block text-xs font-bold text-gray-300 mb-1 flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-[#FF9F1C]" />
-                  <span>Squad Team Name <span className="text-red-400">*</span></span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. KARMA LEGENDS"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white focus:outline-none focus:border-[#FF2E4C]"
-                  required
-                />
-              </div>
-            )}
 
             {/* PLAYER IGN */}
             <div>

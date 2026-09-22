@@ -103,55 +103,58 @@ function sortHomeTournaments(tournaments: any[], currentUser: any) {
 
 export default function CategoryShowcaseSection({ initialTournaments = [] }: CategoryShowcaseSectionProps) {
   const { user: currentUser } = useUser();
-  const [activeCategory, setActiveCategory] = useState<'FULL_MAP' | 'CLASH_SQUAD'>('FULL_MAP');
+  const [activeScoringType, setActiveScoringType] = useState<'PER_KILL' | 'SURVIVAL'>('PER_KILL');
 
-  // Filter tournaments dynamically by active category and sort (User paid first, then paid, then free, time wise series)
+  // Filter tournaments dynamically by active solo scoring type ('PER_KILL' vs 'SURVIVAL') and sort
   const filteredTournaments = sortHomeTournaments(
-    initialTournaments.filter((t) => t.category === activeCategory),
+    initialTournaments.filter((t) => {
+      const scoringType = t.soloScoringType || 'PER_KILL';
+      return scoringType === activeScoringType;
+    }),
     currentUser
   );
 
   return (
-    <div suppressHydrationWarning className="w-full bg-[#0B0E14] text-white py-8 sm:py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-12">
+    <div suppressHydrationWarning className="w-full bg-[#0B0E14] text-white pt-1 sm:pt-2 pb-8 sm:pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-5">
 
-        {/* CATEGORY SHOWCASE CARDS (FULL MAP & CLASH SQUAD) */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-6">
+        {/* CATEGORY SHOWCASE CARDS (PER KILL SOLO & SURVIVAL SOLO) */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           
-          {/* CATEGORY A — FULL MAP */}
+          {/* CATEGORY A — PER KILL SOLO */}
           <div
-            onClick={() => setActiveCategory('FULL_MAP')}
-            className={`p-6 sm:p-8 rounded-3xl bg-[#121722] border transition-all duration-300 relative overflow-hidden cursor-pointer shadow-xl group ${
-              activeCategory === 'FULL_MAP'
+            onClick={() => setActiveScoringType('PER_KILL')}
+            className={`py-3 px-5 sm:py-3.5 sm:px-7 rounded-full bg-[#121722] border transition-all duration-300 relative overflow-hidden cursor-pointer shadow-xl group flex items-center ${
+              activeScoringType === 'PER_KILL'
                 ? 'border-[#FF2E4C] ring-2 ring-[#FF2E4C]/30 shadow-[#FF2E4C]/20'
                 : 'border-[#262F45] hover:border-[#FF2E4C]/60 hover:bg-[#1A2234]'
             }`}
           >
             {/* Background Watermark Icon */}
-            <Crosshair className="absolute -top-4 -right-4 w-44 h-44 text-[#FF2E4C]/10 pointer-events-none stroke-[1] group-hover:scale-110 transition-transform duration-500" />
+            <Crosshair className="absolute -top-6 -right-4 w-32 h-32 sm:w-36 sm:h-36 text-[#FF2E4C]/10 pointer-events-none stroke-[1] group-hover:scale-110 transition-transform duration-500" />
 
-            <div className="relative z-10 space-y-3">
-              <h3 className="text-xl sm:text-2xl font-black text-white tracking-wide">
-                FULL MAP
+            <div className="relative z-10">
+              <h3 className="text-base sm:text-lg font-black text-white tracking-wider">
+                PER KILL
               </h3>
             </div>
           </div>
 
-          {/* CATEGORY B — CLASH SQUAD */}
+          {/* CATEGORY B — SURVIVAL SOLO */}
           <div
-            onClick={() => setActiveCategory('CLASH_SQUAD')}
-            className={`p-6 sm:p-8 rounded-3xl bg-[#121722] border transition-all duration-300 relative overflow-hidden cursor-pointer shadow-xl group ${
-              activeCategory === 'CLASH_SQUAD'
+            onClick={() => setActiveScoringType('SURVIVAL')}
+            className={`py-3 px-5 sm:py-3.5 sm:px-7 rounded-full bg-[#121722] border transition-all duration-300 relative overflow-hidden cursor-pointer shadow-xl group flex items-center ${
+              activeScoringType === 'SURVIVAL'
                 ? 'border-[#FF9F1C] ring-2 ring-[#FF9F1C]/30 shadow-[#FF9F1C]/20'
                 : 'border-[#262F45] hover:border-[#FF9F1C]/60 hover:bg-[#1A2234]'
             }`}
           >
             {/* Background Watermark Icon */}
-            <Zap className="absolute -top-4 -right-4 w-44 h-44 text-[#FF9F1C]/10 pointer-events-none stroke-[1] group-hover:scale-110 transition-transform duration-500" />
+            <Flame className="absolute -top-6 -right-4 w-32 h-32 sm:w-36 sm:h-36 text-[#FF9F1C]/10 pointer-events-none stroke-[1] group-hover:scale-110 transition-transform duration-500" />
 
-            <div className="relative z-10 space-y-3">
-              <h3 className="text-xl sm:text-2xl font-black text-white tracking-wide">
-                CLASH SQUAD
+            <div className="relative z-10">
+              <h3 className="text-base sm:text-lg font-black text-white tracking-wider">
+                SURVIVAL
               </h3>
             </div>
           </div>
@@ -159,12 +162,12 @@ export default function CategoryShowcaseSection({ initialTournaments = [] }: Cat
         </div>
 
         {/* TOURNAMENT GAMES SECTION HEADER & CARDS GRID */}
-        <section className="space-y-6 pt-4 border-t border-[#262F45]/60">
+        <section className="space-y-6 pt-3 sm:pt-4 border-t border-[#262F45]/60">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[#FF2E4C]">
               <Gamepad2 className="w-5 h-5" />
               <span className="text-xl sm:text-2xl font-extrabold uppercase tracking-wide text-white">
-                G<span className="lowercase">ames</span>
+                G<span className="lowercase">ames</span> — {activeScoringType === 'PER_KILL' ? 'Per Kill Solo Scrims' : 'Survival Solo Scrims'}
               </span>
             </div>
           </div>
@@ -174,10 +177,10 @@ export default function CategoryShowcaseSection({ initialTournaments = [] }: Cat
             <div className="p-12 text-center bg-[#121722] rounded-3xl border border-[#262F45] space-y-3">
               <Trophy className="w-12 h-12 text-gray-600 mx-auto" />
               <h3 className="text-base font-bold text-gray-300">
-                No {activeCategory === 'FULL_MAP' ? 'Full Map' : 'Clash Squad'} scrims available right now.
+                No {activeScoringType === 'PER_KILL' ? 'Per Kill Solo' : 'Survival Solo'} scrims available right now.
               </h3>
               <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                Check back soon or switch category above.
+                Check back soon or switch mode category above.
               </p>
             </div>
           ) : (

@@ -79,6 +79,11 @@ export default function AdminHeader() {
     },
     { label: 'Tournaments', href: '/admin/tournaments', icon: Trophy },
     {
+      label: 'Registered Players',
+      href: '/admin/registered-players',
+      icon: Users,
+    },
+    {
       label: 'Registrations',
       href: '/admin/registrations',
       icon: CreditCard,

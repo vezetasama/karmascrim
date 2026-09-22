@@ -293,30 +293,46 @@ export async function notifyTournamentJoined(
   });
 }
 
+export interface RoomParticipantInfo {
+  userId: string;
+  slotNumber?: number | null;
+}
+
 export async function notifyRoomDetails(
-  userIds: string[],
+  participants: (string | RoomParticipantInfo)[],
   tournamentName: string,
   tournamentId: string,
-  isUpdate = false
+  isUpdate = false,
+  isSolo = false
 ) {
-  if (!userIds || userIds.length === 0) return;
+  if (!participants || participants.length === 0) return;
 
-  const title = isUpdate ? 'Room Details Updated 🔐' : 'Room ID & Password Available 🎮';
-  const message = isUpdate
-    ? `The Room ID and password for ${tournamentName} have been updated. Open the tournament to view the latest details.`
-    : `The Room ID and password for ${tournamentName} are now available. Join the room before the match starts.`;
-  const actionText = isUpdate ? 'View Tournament' : 'View Room Details';
+  const notificationsData = participants.map((item) => {
+    const userId = typeof item === 'string' ? item : item.userId;
+    const slotNum = typeof item === 'object' ? item.slotNumber : null;
 
-  const notificationsData = userIds.map((userId) => ({
-    userId,
-    title,
-    message,
-    type: 'TOURNAMENT',
-    relatedId: tournamentId,
-    actionUrl: `/tournaments/${tournamentId}`,
-    actionText,
-    linkUrl: `/tournaments/${tournamentId}`,
-  }));
+    let slotText = '';
+    if (isSolo && slotNum) {
+      slotText = ` (SLOT NUMBER: ${slotNum})`;
+    }
+
+    const title = isUpdate ? 'Room Details Updated 🔐' : 'Room ID & Password Available 🎮';
+    const message = isUpdate
+      ? `The Room ID and password for ${tournamentName} have been updated.${slotText} Open the tournament to view the latest details.`
+      : `The Room ID and password for ${tournamentName} are now available.${slotText} Join the room before the match starts.`;
+    const actionText = isUpdate ? 'View Tournament' : 'View Room Details';
+
+    return {
+      userId,
+      title,
+      message,
+      type: 'TOURNAMENT' as const,
+      relatedId: tournamentId,
+      actionUrl: `/tournaments/${tournamentId}`,
+      actionText,
+      linkUrl: `/tournaments/${tournamentId}`,
+    };
+  });
 
   try {
     await db.notification.createMany({ data: notificationsData });

@@ -88,21 +88,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required tournament fields' }, { status: 400 });
     }
 
-    const tournamentType = type === 'SOLO' ? 'SOLO' : 'SQUAD';
-    const defaultTotalSlots = category === 'FULL_MAP' && tournamentType === 'SQUAD' ? 12 : 48;
+    const tournamentType = 'SOLO';
+    const tournamentCategory = 'FULL_MAP';
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now().toString().slice(-4);
 
-    const mapsData = Array.isArray(maps)
+    let mapsData = Array.isArray(maps)
       ? JSON.stringify(maps)
       : typeof maps === 'string'
       ? maps
       : null;
 
+    if (!maps || (Array.isArray(maps) && maps.length === 0)) {
+      mapsData = JSON.stringify(['Bermuda']);
+    }
+
     let tournamentData: any = {
       name,
       slug,
-      category,
-      format,
+      category: tournamentCategory,
+      format: format || 'Solo',
       type: tournamentType,
       description: description || null,
       rules: rules || null,
@@ -112,7 +116,7 @@ export async function POST(request: Request) {
       registrationDeadline: registrationDeadline || `${date} ${startTime}`,
       entryFee: Number(entryFee),
       prizePool: Number(prizePool),
-      totalSlots: Number(totalSlots ?? defaultTotalSlots),
+      totalSlots: Number(totalSlots ?? 48),
       registeredSlots: 0,
       maps: mapsData,
       bannerUrl: bannerUrl || null,
@@ -120,29 +124,14 @@ export async function POST(request: Request) {
       roomId: roomId || null,
       roomPassword: roomPassword || null,
       roomReleased: false,
-    };
-
-    if (tournamentType === 'SOLO') {
-      tournamentData.soloScoringType = soloScoringType || 'PER_KILL';
-      tournamentData.soloKillReward = Number(soloKillReward || 0);
-      tournamentData.soloPlacementRewards = typeof soloPlacementRewards === 'object' 
+      soloScoringType: soloScoringType || 'PER_KILL',
+      soloKillReward: Number(soloKillReward || 0),
+      soloPlacementRewards: typeof soloPlacementRewards === 'object' 
         ? JSON.stringify(soloPlacementRewards) 
-        : soloPlacementRewards || null;
-      
-      // Wipe out any squad configuration
-      tournamentData.squadKillPoints = null;
-      tournamentData.squadPointTable = null;
-    } else {
-      tournamentData.squadKillPoints = Number(squadKillPoints !== undefined ? squadKillPoints : 1);
-      tournamentData.squadPointTable = typeof squadPointTable === 'object'
-        ? JSON.stringify(squadPointTable)
-        : squadPointTable || JSON.stringify({ "1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1 });
-      
-      // Wipe out any solo configuration
-      tournamentData.soloScoringType = null;
-      tournamentData.soloKillReward = null;
-      tournamentData.soloPlacementRewards = null;
-    }
+        : soloPlacementRewards || null,
+      squadKillPoints: null,
+      squadPointTable: null,
+    };
 
     const tournament = await db.tournament.create({
       data: tournamentData,

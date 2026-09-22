@@ -66,30 +66,24 @@ export default function AdminTournamentsPage() {
   // Tournament Form State
   const [name, setName] = useState('');
   const [category, setCategory] = useState('FULL_MAP');
-  const [format, setFormat] = useState('Squad');
-  const [type, setType] = useState('SQUAD'); // SQUAD or SOLO
+  const [format, setFormat] = useState('Solo');
+  const [type, setType] = useState('SOLO'); // Always SOLO
   const [description, setDescription] = useState('');
   const [rules, setRules] = useState('');
   const [whatsappLink, setWhatsappLink] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [startTime, setStartTime] = useState('07:00 PM');
-  const [entryFee, setEntryFee] = useState<number | ''>(100);
-  const [prizePool, setPrizePool] = useState<number | ''>(2000);
-  const [totalSlots, setTotalSlots] = useState<number | ''>(() => getDefaultTotalSlots('FULL_MAP', 'SQUAD'));
+  const [startTime, setStartTime] = useState('');
+  const [entryFee, setEntryFee] = useState<number | ''>('');
+  const [prizePool, setPrizePool] = useState<number | ''>('');
+  const [totalSlots, setTotalSlots] = useState<number | ''>(48);
   const [bannerUrl, setBannerUrl] = useState('');
   const [status, setStatus] = useState('REGISTRATION_OPEN');
 
   // Solo Scoring Configuration State
   const [soloScoringType, setSoloScoringType] = useState('PER_KILL');
-  const [soloKillReward, setSoloKillReward] = useState<number | ''>(10);
+  const [soloKillReward, setSoloKillReward] = useState<number | ''>('');
   const [soloPlacementRewards, setSoloPlacementRewards] = useState(
     JSON.stringify({ "1": 500, "2": 300, "3": 200 }, null, 2)
-  );
-
-  // Squad Scoring Configuration State
-  const [squadKillPoints, setSquadKillPoints] = useState<number | ''>(1);
-  const [squadPointTable, setSquadPointTable] = useState(
-    JSON.stringify({ "1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1 }, null, 2)
   );
 
   // Maps Management State
@@ -108,13 +102,6 @@ export default function AdminTournamentsPage() {
   useEffect(() => {
     fetchTournaments();
   }, []);
-
-  useEffect(() => {
-    if (!selectedTournament) {
-      setTotalSlots(getDefaultTotalSlots(category, type));
-      setRules(getDefaultRules(category, type));
-    }
-  }, [category, type, selectedTournament]);
 
   const fetchTournaments = async () => {
     try {
@@ -150,25 +137,23 @@ export default function AdminTournamentsPage() {
     setSelectedTournament(null);
     setName('');
     setCategory('FULL_MAP');
-    setFormat('Squad');
-    setType('SQUAD');
+    setFormat('Solo');
+    setType('SOLO');
     setDescription('');
-    setRules(getDefaultRules('FULL_MAP', 'SQUAD'));
+    setRules('');
     setWhatsappLink('');
     setDate(new Date().toISOString().split('T')[0]);
-    setStartTime('07:00 PM');
-    setEntryFee(100);
-    setPrizePool(2000);
-    setTotalSlots(getDefaultTotalSlots('FULL_MAP', 'SQUAD'));
+    setStartTime('');
+    setEntryFee('');
+    setPrizePool('');
+    setTotalSlots(48);
     setBannerUrl('');
     setStatus('REGISTRATION_OPEN');
     setSelectedMaps(['Bermuda', 'Purgatory', 'Kalahari']);
     setCustomMapInput('');
     setSoloScoringType('PER_KILL');
-    setSoloKillReward(10);
+    setSoloKillReward('');
     setSoloPlacementRewards(JSON.stringify({ "1": 500, "2": 300, "3": 200 }, null, 2));
-    setSquadKillPoints(1);
-    setSquadPointTable(JSON.stringify({ "1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1 }, null, 2));
     setError(null);
   };
 
@@ -200,13 +185,6 @@ export default function AdminTournamentsPage() {
         : JSON.stringify({ "1": 500, "2": 300, "3": 200 }, null, 2)
     );
 
-    setSquadKillPoints(t.squadKillPoints !== null && t.squadKillPoints !== undefined ? t.squadKillPoints : 1);
-    setSquadPointTable(
-      t.squadPointTable
-        ? (typeof t.squadPointTable === 'string' ? t.squadPointTable : JSON.stringify(t.squadPointTable, null, 2))
-        : JSON.stringify({ "1": 12, "2": 9, "3": 8, "4": 7, "5": 6, "6": 5, "7": 4, "8": 3, "9": 2, "10": 1 }, null, 2)
-    );
-
     setModalOpen(true);
   };
 
@@ -226,27 +204,42 @@ export default function AdminTournamentsPage() {
   const handleSaveTournament = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionLoading(true);
-    setError(null);
+    if (!name.trim()) {
+      setError('Tournament Name is required.');
+      setActionLoading(false);
+      return;
+    }
+    if (!startTime.trim()) {
+      setError('Start Time is required.');
+      setActionLoading(false);
+      return;
+    }
+    if (entryFee === '') {
+      setError('Entry Fee (COINS) is required.');
+      setActionLoading(false);
+      return;
+    }
+    if (soloScoringType !== 'SURVIVAL' && prizePool === '') {
+      setError('Prize Pool (COINS) is required.');
+      setActionLoading(false);
+      return;
+    }
+    if (soloScoringType === 'PER_KILL' && soloKillReward === '') {
+      setError('Per Kill Reward (COINS) is required.');
+      setActionLoading(false);
+      return;
+    }
 
     let parsedSoloPlacement = null;
-    let parsedSquadTable = null;
 
-    if (type === 'SOLO') {
-      try {
+    try {
+      if (soloPlacementRewards) {
         parsedSoloPlacement = JSON.parse(soloPlacementRewards);
-      } catch (err) {
-        setError('Invalid JSON format for Solo Placement Rewards. Example: { "1": 500, "2": 300 }');
-        setActionLoading(false);
-        return;
       }
-    } else {
-      try {
-        parsedSquadTable = JSON.parse(squadPointTable);
-      } catch (err) {
-        setError('Invalid JSON format for Squad Point Table. Example: { "1": 12, "2": 9, "3": 8 }');
-        setActionLoading(false);
-        return;
-      }
+    } catch (err) {
+      setError('Invalid JSON format for Solo Placement Rewards. Example: { "1": 500, "2": 300 }');
+      setActionLoading(false);
+      return;
     }
 
     const toNumber = (value: number | string | undefined, fallback = 0) => {
@@ -256,7 +249,7 @@ export default function AdminTournamentsPage() {
 
     const calculatedEntryFee = toNumber(entryFee, 0);
     let calculatedPrizePool = toNumber(prizePool, 0);
-    if (type === 'SOLO' && soloScoringType === 'SURVIVAL') {
+    if (soloScoringType === 'SURVIVAL') {
       calculatedPrizePool = calculatedEntryFee * 2;
     }
 
@@ -280,9 +273,6 @@ export default function AdminTournamentsPage() {
       soloScoringType,
       soloKillReward: toNumber(soloKillReward, 0),
       soloPlacementRewards: parsedSoloPlacement,
-      // Squad Scoring Fields
-      squadKillPoints: toNumber(squadKillPoints, 0),
-      squadPointTable: parsedSquadTable,
     };
 
     try {
@@ -585,40 +575,6 @@ export default function AdminTournamentsPage() {
                     />
                   </div>
 
-                  {/* TOURNAMENT SCORING TYPE SELECTOR (SOLO vs SQUAD) */}
-                  <div className="p-4 rounded-2xl bg-[#0B0E14] border border-[#262F45] space-y-3">
-                    <label className="block text-xs font-black uppercase text-gray-300 tracking-wider">
-                      Scoring Architecture & Tournament Type *
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setType('SQUAD')}
-                        className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                          type === 'SQUAD'
-                            ? 'bg-[#FF2E4C]/20 border-[#FF2E4C] text-white shadow-lg'
-                            : 'bg-[#121722] border-[#262F45] text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        <Shield className="w-4 h-4 text-[#FF2E4C]" />
-                        <span>SQUAD (Point Table)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setType('SOLO')}
-                        className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                          type === 'SOLO'
-                            ? 'bg-amber-500/20 border-amber-500 text-white shadow-lg'
-                            : 'bg-[#121722] border-[#262F45] text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        <Trophy className="w-4 h-4 text-[#FF9F1C]" />
-                        <span>SOLO (Cash Payouts)</span>
-                      </button>
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-bold text-gray-400 mb-1">Category *</label>
@@ -628,7 +584,6 @@ export default function AdminTournamentsPage() {
                         className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                       >
                         <option value="FULL_MAP">Full Map</option>
-                        <option value="CLASH_SQUAD">Clash Squad</option>
                       </select>
                     </div>
 
@@ -638,7 +593,7 @@ export default function AdminTournamentsPage() {
                         type="text"
                         value={format}
                         onChange={(e) => setFormat(e.target.value)}
-                        placeholder="Squad, 1v1, 2v2, 4v4"
+                        placeholder="Solo"
                         className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                         required
                       />
@@ -661,67 +616,64 @@ export default function AdminTournamentsPage() {
                     </div>
                   </div>
 
-                  {/* DYNAMIC SCORING CONFIGURATION (SOLO VS SQUAD) */}
-                  {type === 'SOLO' ? (
-                    <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/40 space-y-4">
-                      <div className="flex items-center justify-between pb-2 border-b border-amber-500/30">
-                        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <Trophy className="w-4 h-4" />
-                          Solo Tournament Cash Scoring System
-                        </span>
-                        <span className="text-[10px] font-semibold text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
-                          Player-Level Cash Formula
-                        </span>
+                  {/* SOLO SCORING CONFIGURATION (PER KILL vs SURVIVAL) */}
+                  <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/40 space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-amber-500/30">
+                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Trophy className="w-4 h-4" />
+                        Solo Tournament Cash Scoring System (Full Map)
+                      </span>
+                      <span className="text-[10px] font-semibold text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                        Solo Cash Formula
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-1">Solo Scoring Type *</label>
+                        <select
+                          value={soloScoringType}
+                          onChange={(e) => setSoloScoringType(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white focus:outline-none focus:border-amber-500"
+                        >
+                          <option value="PER_KILL">Per Kill Only (Kills × Reward)</option>
+                          <option value="SURVIVAL">Survival / Placement Only (Rank Reward)</option>
+                        </select>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {soloScoringType === 'PER_KILL' && (
                         <div>
-                          <label className="block text-xs font-bold text-gray-300 mb-1">Solo Scoring Type *</label>
-                          <select
-                            value={soloScoringType}
-                            onChange={(e) => setSoloScoringType(e.target.value)}
-                            className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white focus:outline-none focus:border-amber-500"
-                          >
-                            <option value="PER_KILL">Per Kill Only (Kills × Reward)</option>
-                            <option value="SURVIVAL">Survival / Placement Only (Rank Reward)</option>
-                            <option value="KILL_AND_SURVIVAL">Kill + Survival (Kills Reward + Placement Reward)</option>
-                          </select>
-                        </div>
-
-                        {(soloScoringType === 'PER_KILL' || soloScoringType === 'KILL_AND_SURVIVAL') && (
-                          <div>
-                            <label className="block text-xs font-bold text-gray-300 mb-1">Per Kill Reward (COINS) *</label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={soloKillReward}
-                              onChange={(e) => setSoloKillReward(e.target.value === '' ? '' : Number(e.target.value))}
-                              placeholder="e.g. 15"
-                              className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white font-mono"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {(soloScoringType === 'SURVIVAL' || soloScoringType === 'KILL_AND_SURVIVAL') && (
-                        <div>
-                          <label className="block text-xs font-bold text-gray-300 mb-1">
-                            Solo Placement Rewards Table (JSON: Rank → COINS Amount)
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={soloPlacementRewards}
-                            onChange={(e) => setSoloPlacementRewards(e.target.value)}
-                            placeholder='{ "1": 500, "2": 300, "3": 150 }'
-                            className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white font-mono"
+                          <label className="block text-xs font-bold text-gray-300 mb-1">Per Kill Reward (COINS) *</label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={soloKillReward}
+                            onChange={(e) => setSoloKillReward(e.target.value === '' ? '' : Number(e.target.value))}
+                            placeholder="e.g. 15"
+                            className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white font-mono"
                           />
-                          <span className="text-[10px] text-gray-400 mt-1 block">
-                            Format rank to coin reward, e.g. Rank 1 = 500 COINS, Rank 2 = 300 COINS.
-                          </span>
                         </div>
                       )}
                     </div>
-                  ) : null}
+
+                    {soloScoringType === 'SURVIVAL' && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-1">
+                          Solo Placement Rewards Table (JSON: Rank → COINS Amount)
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={soloPlacementRewards}
+                          onChange={(e) => setSoloPlacementRewards(e.target.value)}
+                          placeholder='{ "1": 500, "2": 300, "3": 150 }'
+                          className="w-full px-3 py-2 rounded-xl bg-[#0B0E14] border border-amber-500/30 text-xs text-white font-mono"
+                        />
+                        <span className="text-[10px] text-gray-400 mt-1 block">
+                          Format rank to coin reward, e.g. Rank 1 = 500 COINS, Rank 2 = 300 COINS.
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Map Multi-Select Section */}
                   <div className="space-y-2">

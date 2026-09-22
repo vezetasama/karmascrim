@@ -82,7 +82,7 @@ export default function HeroSlider({ banners = [] }: HeroSliderProps) {
   };
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 mb-4 sm:mb-6">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 mb-2 sm:mb-3">
       <div
         className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121722] border border-[#262F45]/80 shadow-2xl group transition-all duration-300"
         onMouseEnter={() => setIsHovered(true)}

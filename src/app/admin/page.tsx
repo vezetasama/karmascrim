@@ -128,7 +128,7 @@ export default async function AdminOverviewPage() {
                   Full Authorization
                 </span>
               </div>
-              <p className="text-xs text-gray-400">Manage scrims, verify Fonepay deposits & payments, release room details, give points & publish leaderboards.</p>
+              <p className="text-xs text-gray-400">Manage scrims, verify wallet deposits & payments, release room details, give points & publish leaderboards.</p>
             </div>
           </div>
 
@@ -203,6 +203,15 @@ export default async function AdminOverviewPage() {
           </Link>
 
           <Link
+            href="/admin/registered-players"
+            className="p-3.5 rounded-2xl bg-[#121722] border border-[#262F45] hover:border-[#FF2E4C] transition-all group"
+          >
+            <Users className="w-6 h-6 text-[#FF2E4C] mb-2 group-hover:scale-110 transition-transform" />
+            <h4 className="text-xs font-bold text-white uppercase truncate">Registered Players</h4>
+            <span className="text-[10px] text-gray-400">{metrics.confirmedRegistrations} Participants</span>
+          </Link>
+
+          <Link
             href="/admin/registrations"
             className="p-3.5 rounded-2xl bg-[#121722] border border-[#262F45] hover:border-[#FF9F1C] transition-all group relative"
           >
@@ -230,7 +239,7 @@ export default async function AdminOverviewPage() {
             className="p-3.5 rounded-2xl bg-[#121722] border border-[#262F45] hover:border-emerald-400 transition-all group"
           >
             <QrCode className="w-6 h-6 text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-            <h4 className="text-xs font-bold text-white uppercase truncate">Fonepay QR</h4>
+            <h4 className="text-xs font-bold text-white uppercase truncate">Payment Methods</h4>
             <span className="text-[10px] text-gray-400">QR & Accounts</span>
           </Link>
 
@@ -252,7 +261,7 @@ export default async function AdminOverviewPage() {
               🪙 {metrics.collectedFees.toLocaleString()}
             </div>
             <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-semibold">
-              <TrendingUp className="w-3.5 h-3.5" /> Verified Fonepay Payments
+              <TrendingUp className="w-3.5 h-3.5" /> Verified Wallet Payments
             </div>
           </div>
 

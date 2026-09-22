@@ -71,28 +71,36 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         // Logged-in non-admin player: return ONLY their own points and position record!
         finalRegistrations = sortedRegistrations
           .filter((reg) => reg.userId === userSession.id)
-          .map((reg) => ({
+          .map((reg) => {
+            const defaultSlot = sortedRegistrations.findIndex((r) => r.id === reg.id) + 1;
+            return {
+              id: reg.id,
+              registrationId: reg.registrationId,
+              tournamentId: reg.tournamentId,
+              userId: reg.userId,
+              teamId: reg.teamId || null,
+              status: reg.status,
+              points: reg.points || 0,
+              rank: reg.rank || null,
+              slotNumber: reg.slotNumber || defaultSlot,
+              user: reg.user,
+              team: reg.team || null,
+            };
+          });
+      } else {
+        // Anonymous visitor: strip all points and ranks entirely from response
+        finalRegistrations = sortedRegistrations.map((reg) => {
+          const defaultSlot = sortedRegistrations.findIndex((r) => r.id === reg.id) + 1;
+          return {
             id: reg.id,
             registrationId: reg.registrationId,
             tournamentId: reg.tournamentId,
-            userId: reg.userId,
-            teamId: reg.teamId || null,
             status: reg.status,
-            points: reg.points || 0,
-            rank: reg.rank || null,
+            slotNumber: reg.slotNumber || defaultSlot,
             user: reg.user,
             team: reg.team || null,
-          }));
-      } else {
-        // Anonymous visitor: strip all points and ranks entirely from response
-        finalRegistrations = sortedRegistrations.map((reg) => ({
-          id: reg.id,
-          registrationId: reg.registrationId,
-          tournamentId: reg.tournamentId,
-          status: reg.status,
-          user: reg.user,
-          team: reg.team || null,
-        }));
+          };
+        });
       }
     }
 
@@ -159,6 +167,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         : typeof body.maps === 'string'
         ? body.maps
         : null;
+    }
+
+    if ((updateData.type === 'SOLO' || body.type === 'SOLO') && (!updateData.maps || updateData.maps === '[]')) {
+      updateData.maps = JSON.stringify(['Bermuda']);
     }
 
     if (body.roomId !== undefined) updateData.roomId = body.roomId;

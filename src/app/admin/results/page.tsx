@@ -127,12 +127,13 @@ function AdminResultsContent() {
         if (isSolo) {
           list = tour.registrations
             ?.filter((r: any) => r.status === 'CONFIRMED' && r.user)
-            .map((r: any) => {
+            .map((r: any, idx: number) => {
               const entityId = r.userId;
               ptsMap[entityId] = r.points || 0;
               return {
                 id: entityId,
                 registrationId: r.id,
+                slotNumber: r.slotNumber || (idx + 1),
                 name: r.user.name || r.user.username,
                 freeFireUid: r.user.freeFireUid || 'N/A',
                 freeFireName: r.user.freeFireName || 'N/A',
@@ -771,7 +772,12 @@ function AdminResultsContent() {
                           return (
                             <tr key={item.id} className="hover:bg-[#1A2234]">
                               <td className="p-3 font-bold text-white">
-                                <div>{item.name}</div>
+                                <div className="flex items-center gap-2">
+                                  <span>{item.name}</span>
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-[#FF9F1C]/20 text-[#FF9F1C] border border-[#FF9F1C]/40">
+                                    {item.slotNumber}
+                                  </span>
+                                </div>
                                 <div className="text-[10px] text-gray-400 font-mono">UID: {item.freeFireUid}</div>
                               </td>
                               <td className="p-3">

@@ -23,12 +23,12 @@ export default function AdminPaymentMethodsPage() {
   const [selectedMethod, setSelectedMethod] = useState<any>(null);
 
   // Form State
-  const [name, setName] = useState('Fonepay QR / Direct Merchant');
-  const [type, setType] = useState('FONEPAY');
+  const [name, setName] = useState('eSewa / Khalti / Mobile Banking');
+  const [type, setType] = useState('ESEWA');
   const [accountName, setAccountName] = useState('KARMA SCRIMS ESPORTS');
   const [accountNumber, setAccountNumber] = useState('9841234567');
-  const [merchantDetails, setMerchantDetails] = useState('Fonepay Merchant ID: FONEPAY-KARMA-99');
-  const [instructions, setInstructions] = useState('1. Open Mobile Banking or eSewa/Khalti app.\n2. Scan Fonepay QR or transfer to 9841234567.\n3. Enter exact entry fee amount.\n4. Take screenshot & note Transaction ID.');
+  const [merchantDetails, setMerchantDetails] = useState('Merchant ID: KARMA-ESPORTS-99');
+  const [instructions, setInstructions] = useState('1. Open Mobile Banking or eSewa/Khalti app.\n2. Scan QR or transfer to 9841234567.\n3. Enter exact entry fee amount.\n4. Take screenshot & note Transaction ID.');
   const [qrImageUrl, setQrImageUrl] = useState('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80');
   const [enabled, setEnabled] = useState(true);
 
@@ -55,11 +55,11 @@ export default function AdminPaymentMethodsPage() {
 
   const resetForm = () => {
     setSelectedMethod(null);
-    setName('Fonepay QR / Merchant');
-    setType('FONEPAY');
+    setName('eSewa / Khalti QR');
+    setType('ESEWA');
     setAccountName('KARMA SCRIMS ESPORTS');
     setAccountNumber('9841234567');
-    setMerchantDetails('Fonepay Merchant ID: FONEPAY-KARMA-99');
+    setMerchantDetails('Merchant ID: KARMA-ESPORTS-99');
     setInstructions('1. Scan QR code below.\n2. Pay exact entry fee.\n3. Note transaction ID.');
     setQrImageUrl('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80');
     setEnabled(true);
@@ -149,8 +149,8 @@ export default function AdminPaymentMethodsPage() {
             <Link href="/admin" className="text-xs text-gray-400 hover:text-white flex items-center gap-1 mb-1">
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Admin Overview
             </Link>
-            <h1 className="text-2xl font-black uppercase text-white">Fonepay & Payment Method Settings</h1>
-            <p className="text-xs text-gray-400">Configure Fonepay QR code, merchant account details, and payment instructions</p>
+            <h1 className="text-2xl font-black uppercase text-white">Payment Method Settings</h1>
+            <p className="text-xs text-gray-400">Configure payment QR code, merchant account details, and payment instructions</p>
           </div>
 
           <button
@@ -272,7 +272,7 @@ export default function AdminPaymentMethodsPage() {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Fonepay QR / Direct Merchant"
+                    placeholder="eSewa / Khalti QR / Direct Merchant"
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                     required
                   />
@@ -309,7 +309,7 @@ export default function AdminPaymentMethodsPage() {
                     type="text"
                     value={merchantDetails}
                     onChange={(e) => setMerchantDetails(e.target.value)}
-                    placeholder="Fonepay Merchant Code: FONEPAY-KARMA-99"
+                    placeholder="Merchant Code: KARMA-ESPORTS-99"
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-white"
                   />
                 </div>

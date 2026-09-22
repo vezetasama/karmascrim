@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Wallet, User, Shield, Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
+import { Gamepad2, Wallet, User, Shield, Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 
 function getRelativeTime(dateString: string) {
@@ -67,11 +67,27 @@ export default function Navbar() {
   useEffect(() => {
     if (currentUser) {
       fetchNotifications();
+
+      const handleRefresh = () => {
+        fetchNotifications();
+      };
+
+      if (typeof window !== 'undefined') {
+        window.addEventListener('karma_refresh', handleRefresh);
+        window.addEventListener('balanceUpdated', handleRefresh);
+      }
+
       const interval = window.setInterval(() => {
         fetchNotifications();
-      }, 10000); // 10s reliable polling
+      }, 4000); // 4s reliable polling
 
-      return () => window.clearInterval(interval);
+      return () => {
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('karma_refresh', handleRefresh);
+          window.removeEventListener('balanceUpdated', handleRefresh);
+        }
+        window.clearInterval(interval);
+      };
     }
 
     setNotifications([]);
@@ -155,9 +171,9 @@ export default function Navbar() {
 
   const navItems = [
     {
-      label: 'Home',
+      label: 'Games',
       href: '/',
-      icon: Home,
+      icon: Gamepad2,
       exact: true,
       requiresAuth: false,
     },
@@ -379,9 +395,9 @@ export default function Navbar() {
             {!currentUser && !loading && (
               <Link
                 href="/login"
-                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl glow-btn-red text-white text-xs font-bold uppercase tracking-wider"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl glow-btn-red text-white text-xs font-bold tracking-wider"
               >
-                Login
+                L<span className="lowercase">ogin</span>
               </Link>
             )}
           </div>
@@ -418,9 +434,9 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="px-3 py-1.5 rounded-xl glow-btn-red text-white text-xs font-bold uppercase tracking-wider"
+                className="px-3 py-1.5 rounded-xl glow-btn-red text-white text-xs font-bold tracking-wider"
               >
-                Login
+                L<span className="lowercase">ogin</span>
               </Link>
             )}
           </div>

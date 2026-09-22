@@ -183,6 +183,7 @@ export default function AdminRegistrationsPage() {
                 <thead className="bg-[#0B0E14] text-[#FF9F1C] uppercase text-[10px] font-bold border-b border-[#262F45]">
                   <tr>
                     <th className="p-3.5">Reg ID</th>
+                    <th className="p-3.5">Slot</th>
                     <th className="p-3.5">Tournament</th>
                     <th className="p-3.5">Squad / Captain</th>
                     <th className="p-3.5">Payment Details</th>
@@ -195,6 +196,15 @@ export default function AdminRegistrationsPage() {
                   {filteredRegistrations.map((reg) => (
                     <tr key={reg.id} className="hover:bg-[#1A2234]">
                       <td className="p-3.5 font-mono font-bold text-white">{reg.registrationId}</td>
+                      <td className="p-3.5">
+                        {reg.tournament?.type === 'SOLO' ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-[#FF9F1C]/20 text-[#FF9F1C] border border-[#FF9F1C]/40">
+                            {reg.slotNumber || '-' }
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 font-mono text-[10px]">-</span>
+                        )}
+                      </td>
                       <td className="p-3.5 font-semibold text-white max-w-xs truncate">
                         {reg.tournament?.name}
                       </td>

@@ -35,13 +35,20 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     if (isNowReleased || isRoomUpdated) {
       const confirmedRegs = await db.registration.findMany({
         where: { tournamentId: id, status: 'CONFIRMED' },
-        select: { userId: true },
+        select: { userId: true, slotNumber: true },
+        orderBy: { createdAt: 'asc' },
       });
 
-      const participantUserIds = confirmedRegs.map((r) => r.userId);
-      if (participantUserIds.length > 0) {
+      if (confirmedRegs.length > 0) {
         const isUpdate = Boolean(existing.roomReleased && isRoomUpdated);
-        await notifyRoomDetails(participantUserIds, tournament.name, tournament.id, isUpdate);
+        const isSolo = existing.type === 'SOLO';
+
+        const participantsInfo = confirmedRegs.map((r, idx) => ({
+          userId: r.userId,
+          slotNumber: r.slotNumber || (idx + 1),
+        }));
+
+        await notifyRoomDetails(participantsInfo, tournament.name, tournament.id, isUpdate, isSolo);
       }
     }
 

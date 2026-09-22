@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import EditRegistrationModal from '@/components/EditRegistrationModal';
 import {
   User,
   Users,
@@ -18,6 +19,7 @@ import {
   Shield,
   Clock,
   Edit2,
+  Edit3,
   Save,
   CheckCircle2,
   AlertCircle,
@@ -29,6 +31,9 @@ export default function DashboardPage() {
   const [myTeams, setMyTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'tournaments' | 'teams' | 'profile' | 'notifications'>('tournaments');
+
+  // Edit Registration Modal State
+  const [selectedRegToEdit, setSelectedRegToEdit] = useState<any>(null);
 
   // Profile Edit State
   const [editingProfile, setEditingProfile] = useState(false);
@@ -43,11 +48,22 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchUserData();
 
+    const handleRefresh = () => {
+      fetchUserData();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('karma_refresh', handleRefresh);
+    }
+
     const interval = window.setInterval(() => {
       fetchUserData();
-    }, 15000);
+    }, 4000);
 
     return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('karma_refresh', handleRefresh);
+      }
       window.clearInterval(interval);
     };
   }, []);
@@ -221,8 +237,8 @@ export default function DashboardPage() {
               <div className="p-12 text-center bg-[#121722] rounded-3xl border border-[#262F45]">
                 <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                 <h3 className="text-base font-bold text-gray-300">You haven't registered for any tournaments yet.</h3>
-                <p className="text-xs text-gray-500 mt-1 mb-4">Choose a Full Map or Clash Squad tournament to enter!</p>
-                <Link href="/tournaments" className="px-6 py-2.5 rounded-xl glow-btn-red text-white text-xs font-bold uppercase">
+                <p className="text-xs text-gray-500 mt-1 mb-4">Choose a Per Kill or Survival Solo tournament to enter!</p>
+                <Link href="/" className="px-6 py-2.5 rounded-xl glow-btn-red text-white text-xs font-bold uppercase">
                   Explore Tournaments
                 </Link>
               </div>
@@ -248,16 +264,41 @@ export default function DashboardPage() {
                           </div>
                           <h3 className="text-lg font-bold text-white mt-1">{t.name}</h3>
                           <div className="text-xs text-gray-400 mt-0.5">
-                            Date: <strong>{t.date}</strong> • Start: <strong>{t.startTime}</strong> • Squad: <strong>{reg.team?.name || 'Solo'}</strong>
+                            Date: <strong>{t.date}</strong> • Start: <strong>{t.startTime}</strong> • Mode: <strong>SOLO</strong>
+                          </div>
+                          <div className="text-xs text-gray-300 mt-1 flex items-center gap-3">
+                            <span>IGN: <strong className="text-white">{reg.freeFireName || user.freeFireName || 'Not Set'}</strong></span>
+                            <span>•</span>
+                            <span>UID: <strong className="text-[#FF9F1C] font-mono">{reg.freeFireUid || user.freeFireUid || 'Not Set'}</strong></span>
                           </div>
                         </div>
 
-                        <Link
-                          href={`/tournaments/${t.id}`}
-                          className="px-4 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-gray-300 hover:text-white font-bold text-center"
-                        >
-                          View Tournament Page
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          {!t.roomReleased && (
+                            <button
+                              onClick={() => setSelectedRegToEdit({
+                                id: reg.id,
+                                registrationId: reg.registrationId,
+                                freeFireName: reg.freeFireName || user.freeFireName,
+                                freeFireUid: reg.freeFireUid || user.freeFireUid,
+                                teamName: reg.team?.name,
+                                isSolo: t.type === 'SOLO' || t.format === 'SOLO' || t.name?.toUpperCase().includes('SOLO'),
+                                roomReleased: t.roomReleased,
+                              })}
+                              className="px-3.5 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Edit Details</span>
+                            </button>
+                          )}
+
+                          <Link
+                            href={`/tournaments/${t.id}`}
+                            className="px-4 py-2 rounded-xl bg-[#0B0E14] border border-[#262F45] text-xs text-gray-300 hover:text-white font-bold text-center"
+                          >
+                            View Tournament Page
+                          </Link>
+                        </div>
                       </div>
 
                       {/* Payment Status Bar */}
@@ -281,7 +322,7 @@ export default function DashboardPage() {
                             <span>Match Room Details Unlocked</span>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className={`grid grid-cols-1 ${t.type === 'SOLO' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
                             <div className="p-3 rounded-lg bg-[#0B0E14] border border-[#262F45] flex items-center justify-between">
                               <div>
                                 <span className="text-[10px] text-gray-400 uppercase block">Room ID</span>
@@ -307,6 +348,15 @@ export default function DashboardPage() {
                                 {copiedId === `pass-${reg.id}` ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                               </button>
                             </div>
+
+                            {t.type === 'SOLO' && (
+                              <div className="p-3 rounded-lg bg-[#0B0E14] border border-[#FF9F1C]/40 flex items-center justify-between shadow-[0_0_10px_rgba(255,159,28,0.1)]">
+                                <div>
+                                  <span className="text-[10px] text-[#FF9F1C] font-extrabold uppercase block">Slot Number</span>
+                                  <span className="font-mono text-base font-black text-[#FF9F1C]">{reg.slotNumber || 1}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -326,58 +376,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-          </div>
-        )}
-
-        {/* TAB 2: MY SQUADS */}
-        {activeTab === 'teams' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white uppercase tracking-wider">Registered Squad Rosters</h3>
-            </div>
-
-            {myTeams.length === 0 ? (
-              <div className="p-12 text-center bg-[#121722] rounded-3xl border border-[#262F45]">
-                <Users className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <h3 className="text-base font-bold text-gray-300">No squads created yet.</h3>
-                <p className="text-xs text-gray-500 mt-1">Squads are automatically created during tournament registration!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {myTeams.map((team) => (
-                  <div key={team.id} className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
-                    <div className="flex items-center justify-between border-b border-[#262F45] pb-3">
-                      <div>
-                        <h4 className="text-lg font-bold text-white">{team.name}</h4>
-                        <span className="text-xs text-gray-400">Category: {team.category}</span>
-                      </div>
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#FF2E4C]/10 text-[#FF2E4C] border border-[#FF2E4C]/30">
-                        {team.members?.length || 0} Members
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      {team.members?.map((m: any, i: number) => (
-                        <div key={m.id || i} className="p-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] flex items-center justify-between text-xs">
-                          <div>
-                            <div className="font-bold text-white flex items-center gap-1.5">
-                              <span>{m.freeFireName}</span>
-                              {m.role === 'CAPTAIN' && (
-                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#FF9F1C] text-slate-950 font-black uppercase">
-                                  Captain
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-gray-400 font-mono">UID: {m.freeFireUid}</div>
-                          </div>
-                          <span className="text-gray-500 text-[10px] font-semibold">{m.role}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
@@ -453,6 +451,16 @@ export default function DashboardPage() {
         )}
 
       </main>
+
+      <EditRegistrationModal
+        isOpen={Boolean(selectedRegToEdit)}
+        onClose={() => setSelectedRegToEdit(null)}
+        onSuccess={() => {
+          setSelectedRegToEdit(null);
+          fetchUserData();
+        }}
+        registration={selectedRegToEdit}
+      />
 
       <Footer />
     </div>

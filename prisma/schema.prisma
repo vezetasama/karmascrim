@@ -112,6 +112,7 @@ model Registration {
   paymentStatus  String       @default("UNPAID") // UNPAID, SUBMITTED, VERIFIED, REJECTED
   points         Int          @default(0) // Point Table score
   rank           Int?         // Auto-calculated rank based on points descending
+  slotNumber     Int?         // Slot number assigned upon registration (for SOLO tournaments)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

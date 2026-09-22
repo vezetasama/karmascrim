@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Wallet, PlusCircle, User } from 'lucide-react';
+import { Gamepad2, Wallet, PlusCircle, User } from 'lucide-react';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -31,9 +31,9 @@ export default function MobileBottomNav() {
 
   const navItems = [
     {
-      label: 'Home',
+      label: 'Games',
       href: '/',
-      icon: Home,
+      icon: Gamepad2,
       exact: true,
       requiresAuth: false,
     },

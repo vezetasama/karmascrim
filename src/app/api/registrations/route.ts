@@ -130,6 +130,15 @@ export async function POST(request: Request) {
       async (tx) => {
         const isFree = entryFee === 0;
 
+        // Calculate slot number for SOLO tournaments
+        let slotNumber: number | null = null;
+        if (tournament.type === 'SOLO') {
+          const existingCount = await tx.registration.count({
+            where: { tournamentId },
+          });
+          slotNumber = existingCount + 1;
+        }
+
         // 1. Create registration record
         const registration = await tx.registration.create({
           data: {
@@ -139,6 +148,7 @@ export async function POST(request: Request) {
             userId: userSession.id,
             status: 'CONFIRMED',
             paymentStatus: 'VERIFIED',
+            slotNumber,
           },
           include: {
             tournament: true,

@@ -25,12 +25,24 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     fetchUser();
     fetchTournament();
 
+    const handleRefresh = () => {
+      fetchUser();
+      fetchTournament();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('karma_refresh', handleRefresh);
+    }
+
     const interval = window.setInterval(() => {
       fetchUser();
       fetchTournament();
-    }, 15000);
+    }, 4000);
 
     return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('karma_refresh', handleRefresh);
+      }
       window.clearInterval(interval);
     };
   }, [tournamentId]);
@@ -163,63 +175,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                   </div>
                 )}
 
-                {/* ROOM CODE DETAILS */}
-                <div className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                      {tournament.roomAccessGranted ? (
-                        <Unlock className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <Lock className="w-4 h-4 text-[#FF2E4C]" />
-                      )}
-                      Match Lobby Room Code
-                    </h3>
-                    {tournament.roomReleased && (
-                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                        Released
-                      </span>
-                    )}
-                  </div>
 
-                  {tournament.roomAccessGranted && tournament.roomId ? (
-                    <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/40 space-y-3">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-300">Room ID:</span>
-                        <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
-                          <span>{tournament.roomId}</span>
-                          <button
-                            onClick={() => copyToClipboard(tournament.roomId, 'room')}
-                            className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
-                          >
-                            {copiedRoom ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs pt-2 border-t border-emerald-500/20">
-                        <span className="text-gray-300">Room Password:</span>
-                        <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
-                          <span>{tournament.roomPassword}</span>
-                          <button
-                            onClick={() => copyToClipboard(tournament.roomPassword, 'pass')}
-                            className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
-                          >
-                            {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-xl bg-[#0B0E14] border border-[#262F45] text-center space-y-2">
-                      <Lock className="w-8 h-8 text-gray-600 mx-auto" />
-                      <div className="text-xs font-bold text-gray-300">
-                        {!tournament.roomReleased
-                          ? 'Room details will be released before 10 minutes.'
-                          : 'Room code releasing shortly.'}
-                      </div>
-                    </div>
-                  )}
-                </div>
 
                 {/* TOURNAMENT RULES — ONLY SHOWN WHEN RELEASED BY ADMIN */}
                 {tournament.rules && (
@@ -394,7 +350,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                         Official Match Leaderboard & Standings
                       </h3>
                       <p className="text-[11px] text-gray-400">
-                        {isFullMap ? 'Verified Full Map Standings' : 'Verified Clash Squad Results'}
+                        Verified Solo Tournament Standings
                       </p>
                     </div>
                   </div>
@@ -532,8 +488,13 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                           <span className="w-6 h-6 rounded-full bg-[#0B0E14] text-gray-400 font-bold flex items-center justify-center text-[10px]">
                             {idx + 1}
                           </span>
-                          <div className="font-bold text-white">
-                            {reg.team?.name || reg.user?.name || 'Solo Participant'}
+                          <div className="font-bold text-white flex items-center gap-2">
+                            <span>{reg.team?.name || reg.user?.name || 'Solo Participant'}</span>
+                            {isSolo && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-[#FF9F1C]/10 text-[#FF9F1C] border border-[#FF9F1C]/30">
+                                {reg.slotNumber || (idx + 1)}
+                              </span>
+                            )}
                           </div>
                         </div>
                         {reg.status === 'CONFIRMED' ? (
@@ -559,65 +520,165 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
             
               {/* Registration Action Card */}
               {userRegistration ? (
-                /* REDESIGNED COMPACT DASHBOARD FOR PAID/REGISTERED USERS */
-                <div className="p-4 rounded-2xl bg-[#121722] border border-emerald-500/30 space-y-3 shadow-lg shadow-emerald-500/5">
-                  
-                  {/* Status Banner */}
-                  <div className="flex items-center justify-between pb-2 border-b border-[#262F45]">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                      Registration Status
-                    </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 ${
-                      userRegistration.status === 'CONFIRMED'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                        : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                    }`}>
-                      {userRegistration.status === 'CONFIRMED' && <Check className="w-3 h-3 stroke-[3]" />}
-                      {userRegistration.status}
-                    </span>
+                <div className="space-y-4">
+                  {/* 1. MATCH LOBBY ROOM CODE DETAILS */}
+                  <div className="p-6 rounded-2xl bg-[#121722] border border-[#262F45] space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        {tournament.roomAccessGranted ? (
+                          <Unlock className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <Lock className="w-4 h-4 text-[#FF2E4C]" />
+                        )}
+                        Match Lobby Room Code
+                      </h3>
+                      {tournament.roomReleased && (
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                          Released
+                        </span>
+                      )}
+                    </div>
+
+                    {tournament.roomAccessGranted && tournament.roomId ? (
+                      <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/40 space-y-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-300">Room ID:</span>
+                          <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
+                            <span>{tournament.roomId}</span>
+                            <button
+                              onClick={() => copyToClipboard(tournament.roomId, 'room')}
+                              className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
+                            >
+                              {copiedRoom ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs pt-2 border-t border-emerald-500/20">
+                          <span className="text-gray-300">Room Password:</span>
+                          <div className="flex items-center gap-2 font-mono text-base font-extrabold text-emerald-400">
+                            <span>{tournament.roomPassword}</span>
+                            <button
+                              onClick={() => copyToClipboard(tournament.roomPassword, 'pass')}
+                              className="p-1 rounded bg-[#0B0E14] text-gray-300 hover:text-white"
+                            >
+                              {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {isSolo && (
+                          <div className="flex items-center justify-between text-xs pt-2 border-t border-emerald-500/20">
+                            <span className="text-gray-300 font-bold uppercase tracking-wider">Slot Number:</span>
+                            <span className="font-mono text-base font-black text-[#FF9F1C] bg-[#FF9F1C]/10 px-2.5 py-0.5 rounded-lg border border-[#FF9F1C]/30 shadow-[0_0_8px_rgba(255,159,28,0.2)]">
+                              {userRegistration?.slotNumber || (tournament.registrations.findIndex((r: any) => r.id === userRegistration?.id) + 1)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-[#0B0E14] border border-[#262F45] text-center space-y-2">
+                        <Lock className="w-8 h-8 text-gray-600 mx-auto" />
+                        <div className="text-xs font-bold text-gray-300">
+                          {!tournament.roomReleased
+                            ? 'Room details will be released before 10 minutes.'
+                            : 'Room code releasing shortly.'}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Compact Timing & Maps */}
-                  <div className="p-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-1.5 text-[11px]">
-                    <div className="flex items-center justify-between text-gray-300">
-                      <span className="text-gray-400 flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-[#FF2E4C]" /> Date &amp; Time:
+                  {/* 2. SEPARATE EDIT REGISTRATION DETAILS BUTTON (BETWEEN ROOM CODE & REGISTRATION STATUS) */}
+                  {!tournament.roomReleased && (
+                    <button
+                      onClick={() => setShowEditModal(true)}
+                      className="w-full py-3 rounded-2xl bg-[#0B0E14] hover:bg-[#121722] border border-[#262F45] hover:border-cyan-500/50 text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center justify-center gap-2 transition-all shadow-md"
+                    >
+                      <Edit3 className="w-4 h-4 text-cyan-400" />
+                      <span>Edit Registration Details</span>
+                    </button>
+                  )}
+
+                  {/* 3. SEPARATE REGISTRATION STATUS CARD */}
+                  <div className="p-4 rounded-2xl bg-[#121722] border border-emerald-500/30 space-y-3 shadow-lg shadow-emerald-500/5">
+                    
+                    {/* Status Banner */}
+                    <div className="flex items-center justify-between pb-2 border-b border-[#262F45]">
+                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        Registration Status
                       </span>
-                      <span className="font-bold text-white font-mono text-[11px]">
-                        {tournament.date} • {tournament.startTime}
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 ${
+                        userRegistration.status === 'CONFIRMED'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                          : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                      }`}>
+                        {userRegistration.status === 'CONFIRMED' && <Check className="w-3 h-3 stroke-[3]" />}
+                        {userRegistration.status}
                       </span>
                     </div>
 
-                    {(() => {
-                      let mapsList: string[] = [];
-                      if (Array.isArray(tournament.maps)) mapsList = tournament.maps;
-                      else if (typeof tournament.maps === 'string') {
-                        try {
-                          const p = JSON.parse(tournament.maps);
-                          if (Array.isArray(p)) mapsList = p;
-                          else mapsList = tournament.maps.split(',').map((m: string) => m.trim());
-                        } catch (e) {
-                          mapsList = tournament.maps.split(',').map((m: string) => m.trim());
-                        }
-                      }
-                      if (mapsList.length === 0) return null;
-                      return (
-                        <div className="flex items-center justify-between pt-1 border-t border-[#262F45]/60">
-                          <span className="text-gray-400 flex items-center gap-1">
-                            <Compass className="w-3 h-3 text-[#FF9F1C]" /> Maps:
-                          </span>
-                          <div className="flex flex-wrap gap-1">
-                            {mapsList.map((mapName: string) => (
-                              <span key={mapName} className="px-1.5 py-0.5 rounded bg-[#121722] border border-[#262F45] text-[10px] font-bold text-white">
-                                🗺️ {mapName}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+                    {/* Compact Timing & Maps */}
+                    <div className="p-2.5 rounded-xl bg-[#0B0E14] border border-[#262F45] space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between text-gray-300">
+                        <span className="text-gray-400 flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-[#FF2E4C]" /> Date &amp; Time:
+                        </span>
+                        <span className="font-bold text-white font-mono text-[11px]">
+                          {tournament.date} • {tournament.startTime}
+                        </span>
+                      </div>
 
+                      <div className="flex items-center justify-between text-gray-300 pt-1 border-t border-[#262F45]/60">
+                        <span className="text-gray-400 flex items-center gap-1">
+                          <User className="w-3 h-3 text-[#FF2E4C]" /> IGN / UID:
+                        </span>
+                        <span className="font-bold text-white font-mono text-[11px]">
+                          {userRegistration.freeFireName || currentUser?.freeFireName || 'N/A'} ({userRegistration.freeFireUid || currentUser?.freeFireUid || 'N/A'})
+                        </span>
+                      </div>
+
+                      {!isSolo && (
+                        <div className="flex items-center justify-between text-gray-300 pt-1 border-t border-[#262F45]/60">
+                          <span className="text-gray-400 flex items-center gap-1">
+                            <Shield className="w-3 h-3 text-[#FF9F1C]" /> Team:
+                          </span>
+                          <span className="font-bold text-[#FF9F1C] text-[11px]">
+                            {userRegistration.team?.name || 'Squad'}
+                          </span>
+                        </div>
+                      )}
+
+                      {(() => {
+                        let mapsList: string[] = [];
+                        if (Array.isArray(tournament.maps)) mapsList = tournament.maps;
+                        else if (typeof tournament.maps === 'string') {
+                          try {
+                            const p = JSON.parse(tournament.maps);
+                            if (Array.isArray(p)) mapsList = p;
+                            else mapsList = tournament.maps.split(',').map((m: string) => m.trim());
+                          } catch (e) {
+                            mapsList = tournament.maps.split(',').map((m: string) => m.trim());
+                          }
+                        }
+                        if (mapsList.length === 0) return null;
+                        return (
+                          <div className="flex items-center justify-between pt-1 border-t border-[#262F45]/60">
+                            <span className="text-gray-400 flex items-center gap-1">
+                              <Compass className="w-3 h-3 text-[#FF9F1C]" /> Maps:
+                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {mapsList.map((mapName: string) => (
+                                <span key={mapName} className="px-1.5 py-0.5 rounded bg-[#121722] border border-[#262F45] text-[10px] font-bold text-white">
+                                  🗺️ {mapName}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                  </div>
                 </div>
               ) : (
                 /* STANDARD FULL CARD FOR UNREGISTERED PLAYERS */
@@ -735,7 +796,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                       ? 'Slots Full'
                       : tournament.status !== 'REGISTRATION_OPEN'
                       ? `Registration ${tournament.status}`
-                      : 'Register Now & Submit Fonepay'}
+                      : 'Register Now'}
                   </button>
 
                 </div>
@@ -773,6 +834,27 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           fetchTournament();
         }}
       />
+
+      {/* EDIT REGISTRATION MODAL */}
+      {userRegistration && (
+        <EditRegistrationModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            setShowEditModal(false);
+            fetchTournament();
+          }}
+          registration={{
+            id: userRegistration.id,
+            registrationId: userRegistration.registrationId,
+            freeFireName: userRegistration.freeFireName || currentUser?.freeFireName,
+            freeFireUid: userRegistration.freeFireUid || currentUser?.freeFireUid,
+            teamName: userRegistration.team?.name,
+            isSolo: isSolo,
+            roomReleased: tournament.roomReleased,
+          }}
+        />
+      )}
 
       <Footer />
     </div>

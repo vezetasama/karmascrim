@@ -38,11 +38,20 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       }
 
       // Update Registration
+      let slotNumberToAssign = registration.slotNumber;
+      if (!slotNumberToAssign && registration.tournament.type === 'SOLO') {
+        const count = await db.registration.count({
+          where: { tournamentId: registration.tournamentId, id: { not: id } },
+        });
+        slotNumberToAssign = count + 1;
+      }
+
       await db.registration.update({
         where: { id },
         data: {
           status: 'CONFIRMED',
           paymentStatus: 'VERIFIED',
+          ...(slotNumberToAssign ? { slotNumber: slotNumberToAssign } : {}),
         },
       });
 

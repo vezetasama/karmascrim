@@ -187,12 +187,12 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
       <div className="flex items-center justify-between gap-3 relative z-10">
         <span
           className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm border ${
-            isFullMap
-              ? 'bg-[#FF2E4C]/15 border-[#FF2E4C]/40 text-[#FF2E4C]'
-              : 'bg-[#FF9F1C]/15 border-[#FF9F1C]/40 text-[#FF9F1C]'
+            tournament.soloScoringType === 'SURVIVAL'
+              ? 'bg-[#FF9F1C]/15 border-[#FF9F1C]/40 text-[#FF9F1C]'
+              : 'bg-[#FF2E4C]/15 border-[#FF2E4C]/40 text-[#FF2E4C]'
           }`}
         >
-          {isSolo ? 'SOLO' : 'SQUAD'}
+          {tournament.soloScoringType === 'SURVIVAL' ? 'SURVIVAL SOLO' : 'PER KILL SOLO'}
         </span>
         {getStatusBadge(tournament.status)}
       </div>
@@ -237,25 +237,23 @@ export default function TournamentCard({ tournament }: TournamentCardProps) {
         </div>
       </div>
 
-      {!isSolo && (
-        <div className="relative z-10 space-y-1.5">
-          <div className="flex justify-between items-center text-xs font-semibold">
-            <span className="text-gray-400 flex items-center gap-1.5 font-medium">
-              <Users className="w-3.5 h-3.5 text-gray-400" />
-              Slots Registered
-            </span>
-            <span className="font-semibold text-white">
-              {tournament.registeredSlots || 0} / {tournament.totalSlots || 48}
-            </span>
-          </div>
-          <div className="w-full h-2 rounded-full bg-[#0B0E14] overflow-hidden border border-[#262F45]">
-            <div
-              className="h-full bg-gradient-to-r from-[#FF2E4C] to-[#FF9F1C] transition-all duration-500 rounded-full"
-              style={{ width: `${percentageFull}%` }}
-            />
-          </div>
+      <div className="relative z-10 space-y-1.5">
+        <div className="flex justify-between items-center text-xs font-semibold">
+          <span className="text-gray-400 flex items-center gap-1.5 font-medium">
+            <Users className="w-3.5 h-3.5 text-gray-400" />
+            Slots Registered
+          </span>
+          <span className="font-semibold text-white">
+            {tournament.registeredSlots || 0} / {tournament.totalSlots || 48}
+          </span>
         </div>
-      )}
+        <div className="w-full h-2 rounded-full bg-[#0B0E14] overflow-hidden border border-[#262F45]">
+          <div
+            className="h-full bg-gradient-to-r from-[#FF2E4C] to-[#FF9F1C] transition-all duration-500 rounded-full"
+            style={{ width: `${percentageFull}%` }}
+          />
+        </div>
+      </div>
 
       {/* BOTTOM ACTION BUTTON */}
       <div className="pt-1 relative z-10">
